@@ -1,0 +1,52 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:SimpleObjectBrowser.ViewModels;assembly=SimpleObjectBrowser"
+        xmlns:xaml="clr-namespace:SimpleObjectBrowser.Xaml;assembly=SimpleObjectBrowser"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="SimpleObjectBrowser.Views.MainWindow"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="SimpleObjectBrowser">
+  
+  <Design.DataContext>
+    <vm:MainWindowViewModel/>
+  </Design.DataContext>
+
+  <Grid>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="*" />
+      <ColumnDefinition Width="5" />
+      <ColumnDefinition Width="3*" />
+    </Grid.ColumnDefinitions>
+
+    <Grid Grid.Column="0">
+      <TreeView Items="{Binding Accounts}">
+        <TreeView.DataTemplates>
+          <TreeDataTemplate DataType="vm:AccountViewModel" ItemsSource="{Binding Buckets}">
+            <Grid>
+              <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsBusy}" />
+              
+              <StackPanel Orientation="Horizontal">
+                <Image Width="16" Height="16" Source="{Binding Icon}" />
+                <TextBlock Text="{Binding Name}" />
+              </StackPanel>
+            </Grid>
+          </TreeDataTemplate>
+          <DataTemplate DataType="vm:BucketViewModel">
+            <StackPanel Orientation="Horizontal" Spacing="5">
+              <Image Width="16" Height="16" Source="/Assets/bucket.png" />
+              <TextBlock Text="{Binding Name}" />
+            </StackPanel>
+          </DataTemplate>
+        </TreeView.DataTemplates>
+      </TreeView>
+    </Grid>
+
+    <GridSplitter Grid.Column="1" />
+
+    <Grid Grid.Column="2">
+
+    </Grid>
+  </Grid>
+</Window>
