@@ -11,17 +11,15 @@ namespace SimpleObjectBrowser.Services
 {
     public interface ICredential
     {
-        string Name { get; }
-        IStorageAccount Connect();
+        public IStorageAccount Connect();
     }
 
     public class AzureBlobStorageConnectionStringCredential : ICredential
     {
-        public string Name { get; set; }
         public string ConnectionString { get; set; }
         public IStorageAccount Connect()
         {
-            return new AzureBlobStorageAccount(CloudStorageAccount.Parse(ConnectionString), Name);
+            return new AzureBlobStorageAccount(CloudStorageAccount.Parse(ConnectionString));
         }
     }
 
@@ -30,14 +28,13 @@ namespace SimpleObjectBrowser.Services
         private readonly CloudStorageAccount _nativeAccount;
         private readonly CloudBlobClient _blobClient;
 
-        public AzureBlobStorageAccount(CloudStorageAccount nativeAccount, string name)
+        public AzureBlobStorageAccount(CloudStorageAccount nativeAccount)
         {
             _nativeAccount = nativeAccount;
             _blobClient = _nativeAccount.CreateCloudBlobClient();
-            Name = name ?? _nativeAccount.Credentials.AccountName;
         }
 
-        public string Name { get; }
+        public string Name => _nativeAccount.Credentials.AccountName;
 
         public AccountType Type => AccountType.AzureBlobStorage;
 
@@ -65,40 +62,13 @@ namespace SimpleObjectBrowser.Services
             Name = _nativeContainer.Name;
         }
 
-        public async Task<IEnumerable<IEntry>> ListEntriesAsync(string prefix, bool heirarchical)
+        public async Task<IEnumerable<IBlob>> ListBlobsAsync()
         {
             var segmentedResult = await _nativeContainer.ListBlobsSegmentedAsync(
-                prefix, heirarchical == false, BlobListingDetails.Metadata, null, null, null, null);
-
-            var entries = new List<IEntry>();
-
-            foreach (var entry in segmentedResult.Results)
-            {
-                if (entry is CloudBlockBlob blob)
-                {
-                    entries.Add(new AzureBlobStorageBlob(this, blob));
-                }
-                else if (entry is CloudBlobDirectory directory)
-                {
-                    entries.Add(new AzureDirectory(this, directory.Prefix));
-                }
-            }
+                string.Empty, true, BlobListingDetails.Metadata, null, null, null, null);
 
             return segmentedResult.Results.OfType<CloudBlockBlob>().Select(b => new AzureBlobStorageBlob(this, b));
         }
-    }
-
-    public class AzureDirectory : IEntry
-    {
-        public AzureDirectory(AzureBlobStorageContainer azureBlobStorageContainer, string prefix)
-        {
-            Bucket = azureBlobStorageContainer;
-            Name = prefix;
-        }
-
-        public IStorageBucket Bucket { get; }
-        public string Name { get; }
-        public bool IsDirectory => true;
     }
 
     public class AzureBlobStorageBlob : IBlob
@@ -121,7 +91,5 @@ namespace SimpleObjectBrowser.Services
             LastModified = nativeBlob.Properties.LastModified;
             ContentType = nativeBlob.Properties.ContentType;
         }
-
-        public bool IsDirectory => false;
     }
 }

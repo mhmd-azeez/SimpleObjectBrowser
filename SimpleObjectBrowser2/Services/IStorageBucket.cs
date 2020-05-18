@@ -7,6 +7,6 @@ namespace SimpleObjectBrowser.Services
     {
         string Name { get; }
 
-        Task<IEnumerable<IEntry>> ListEntriesAsync(string prefix, bool heirarchical);
+        Task<IEnumerable<IBlob>> ListBlobsAsync();
     }
 }

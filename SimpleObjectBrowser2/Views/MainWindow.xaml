@@ -21,7 +21,7 @@
     </Grid.ColumnDefinitions>
 
     <Grid Grid.Column="0">
-      <TreeView Items="{Binding Accounts}">
+      <TreeView SelectedItem="{Binding SelectedItem}" Items="{Binding Accounts}">
         <TreeView.DataTemplates>
           <TreeDataTemplate DataType="vm:AccountViewModel" ItemsSource="{Binding Buckets}">
             <Grid>
@@ -46,7 +46,19 @@
     <GridSplitter Grid.Column="1" />
 
     <Grid Grid.Column="2">
-
+      <DataGrid Items="{Binding SelectedBucket.Blobs, Mode=OneWay}" >
+        <DataGrid.Columns>
+          <DataGridTextColumn Header="Name"
+                              Binding="{Binding Name}"
+                              Width="2*" />
+          <DataGridTextColumn Header="Length"
+                              Binding="{Binding Length}"
+                              Width="*" />
+          <DataGridTextColumn Header="Content Type"
+                              Binding="{Binding ContentType}"
+                              Width="*" />
+        </DataGrid.Columns>
+      </DataGrid>
     </Grid>
   </Grid>
 </Window>
