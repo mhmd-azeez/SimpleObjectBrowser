@@ -4,6 +4,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -35,14 +36,20 @@ namespace SimpleObjectBrowser.ViewModels
 
         public ICredential Credential { get; }
 
-        public async void Expand()
+        public async Task ExpandAsync()
         {
-            IsBusy = true;
+            try
+            {
+                IsBusy = true;
 
-            var buckets = await _account.ListBucketsAsync();
-            Buckets = new ObservableCollection<BucketViewModel>(buckets.Select(n => new BucketViewModel(n)));
+                var buckets = await _account.ListBucketsAsync();
+                Buckets = new ObservableCollection<BucketViewModel>(buckets.Select(n => new BucketViewModel(n)));
 
-            IsBusy = false;
+            }
+            finally
+            {
+                IsBusy = false;
+            }
         }
 
         private string _name;
@@ -82,17 +89,13 @@ namespace SimpleObjectBrowser.ViewModels
             // LoadCommand = new DelegateCommand(p => Load(), p => _blobs is null);
         }
 
-        public async void Load(string prefix)
+        public async Task LoadAsync(string prefix)
         {
             IsBusy = true;
             try
             {
                 var blobs = await _nativeBucket.ListEntriesAsync(prefix, true);
                 Blobs = new ObservableCollection<BlobViewModel>(blobs.Select(b => new BlobViewModel(this, b)));
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex.Message);
             }
             finally
             {

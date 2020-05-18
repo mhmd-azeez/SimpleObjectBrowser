@@ -1,5 +1,6 @@
 ﻿using SimpleObjectBrowser.Mvvm;
 using SimpleObjectBrowser.Services;
+using System;
 using System.Collections.ObjectModel;
 
 namespace SimpleObjectBrowser.ViewModels
@@ -25,6 +26,11 @@ namespace SimpleObjectBrowser.ViewModels
         {
             get { return _selectedBucket; }
             set { Set(ref _selectedBucket, value); }
+        }
+
+        public void SaveAccounts()
+        {
+            ConfigService.SaveAccounts(Accounts);
         }
     }
 }

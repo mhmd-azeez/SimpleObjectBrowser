@@ -41,31 +41,54 @@ namespace SimpleObjectBrowser
             _viewModel.Accounts = new ObservableCollection<AccountViewModel>(accounts);
         }
 
-        private void TreeView_Expanded(object sender, RoutedEventArgs e)
+        private async void TreeView_Expanded(object sender, RoutedEventArgs e)
         {
             TreeViewItem item = e.OriginalSource as TreeViewItem;
             if (item?.DataContext is AccountViewModel accountViewModel)
             {
-                accountViewModel.Expand();
+                try
+                {
+                    await accountViewModel.ExpandAsync();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
             }
         }
 
-        private void TreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        private async void TreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
         {
             if (e.NewValue is BucketViewModel bucket)
             {
-                _viewModel.Prefix = string.Empty;
-                _viewModel.SelectedBucket = bucket;
-                bucket.Load(_viewModel.Prefix);
+                try
+                {
+                    var prefix = string.Empty;
+                    await bucket.LoadAsync(prefix);
+                    _viewModel.Prefix = prefix;
+                    _viewModel.SelectedBucket = bucket;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
             }
         }
 
-        private void ListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        private async void ListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             if (listView.SelectedItem is BlobViewModel entry && entry.IsDirectory)
             {
-                _viewModel.Prefix = entry.FullName;
-                _viewModel.SelectedBucket.Load(_viewModel.Prefix);
+                try
+                {
+                    var prefix = entry.FullName;
+                    await _viewModel.SelectedBucket.LoadAsync(prefix);
+                    _viewModel.Prefix = prefix;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
             }
         }
 
@@ -82,7 +105,7 @@ namespace SimpleObjectBrowser
             if (result == true)
             {
                 _viewModel.Accounts.Add(window.Account);
-                ConfigService.SaveAccounts(_viewModel.Accounts);
+                _viewModel.SaveAccounts();
             }
         }
 
@@ -91,6 +114,13 @@ namespace SimpleObjectBrowser
             addAccountButton.IsDropDownOpen = false;
             var window = new S3Dialog();
             AddAccount(window);
+        }
+
+        private void forgetAccountMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            var account = (AccountViewModel)((FrameworkElement)sender).DataContext;
+            _viewModel.Accounts.Remove(account);
+            _viewModel.SaveAccounts();
         }
     }
 }
