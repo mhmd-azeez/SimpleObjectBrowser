@@ -1,22 +1,15 @@
-﻿using Fluent;
+﻿
+using Microsoft.Win32;
+
 using SimpleObjectBrowser.Services;
 using SimpleObjectBrowser.ViewModels;
 using SimpleObjectBrowser.Views;
+
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace SimpleObjectBrowser
 {
@@ -63,10 +56,9 @@ namespace SimpleObjectBrowser
             {
                 try
                 {
-                    var prefix = string.Empty;
-                    await bucket.LoadAsync(prefix);
-                    _viewModel.Prefix = prefix;
+                    _viewModel.Prefix = string.Empty;
                     _viewModel.SelectedBucket = bucket;
+                    _viewModel.Refresh();
                 }
                 catch (Exception ex)
                 {
@@ -81,9 +73,8 @@ namespace SimpleObjectBrowser
             {
                 try
                 {
-                    var prefix = entry.FullName;
-                    await _viewModel.SelectedBucket.LoadAsync(prefix);
-                    _viewModel.Prefix = prefix;
+                    _viewModel.Prefix = entry.FullName;
+                    _viewModel.Refresh();
                 }
                 catch (Exception ex)
                 {
@@ -121,6 +112,23 @@ namespace SimpleObjectBrowser
             var account = (AccountViewModel)((FrameworkElement)sender).DataContext;
             _viewModel.Accounts.Remove(account);
             _viewModel.SaveAccounts();
+        }
+
+        private void uploadFileButton_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new OpenFileDialog();
+            dialog.Multiselect = true;
+            var result = dialog.ShowDialog();
+
+            if (result == true)
+            {
+                _viewModel.UploadFile(dialog.FileNames);
+            }
+        }
+
+        private void refreshButton_Click(object sender, RoutedEventArgs e)
+        {
+            _viewModel.Refresh();
         }
     }
 }

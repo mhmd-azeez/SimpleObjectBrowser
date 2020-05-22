@@ -1,5 +1,8 @@
-﻿using SimpleObjectBrowser.Mvvm;
+﻿using MimeTypes;
+
+using SimpleObjectBrowser.Mvvm;
 using SimpleObjectBrowser.Services;
+
 using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -82,19 +85,13 @@ namespace SimpleObjectBrowser.ViewModels
     public class BucketViewModel : BindableBase
     {
         private string _name;
-        private IStorageBucket _nativeBucket;
-
-        public BucketViewModel()
-        {
-            // LoadCommand = new DelegateCommand(p => Load(), p => _blobs is null);
-        }
 
         public async Task LoadAsync(string prefix)
         {
             IsBusy = true;
             try
             {
-                var blobs = await _nativeBucket.ListEntriesAsync(prefix, true);
+                var blobs = await NativeBucket.ListEntriesAsync(prefix, true);
                 Blobs = new ObservableCollection<BlobViewModel>(blobs.Select(b => new BlobViewModel(this, b)));
             }
             finally
@@ -105,7 +102,7 @@ namespace SimpleObjectBrowser.ViewModels
 
         public BucketViewModel(IStorageBucket bucket)
         {
-            _nativeBucket = bucket;
+            NativeBucket = bucket;
             Name = bucket.Name;
             // LoadCommand = new DelegateCommand(p => Load(), p => _blobs is null);
         }
@@ -130,6 +127,8 @@ namespace SimpleObjectBrowser.ViewModels
             get { return _blobs; }
             set { Set(ref _blobs, value); }
         }
+
+        public IStorageBucket NativeBucket { get; }
     }
 
     public class BlobViewModel : BindableBase
@@ -190,12 +189,33 @@ namespace SimpleObjectBrowser.ViewModels
                 IsDirectory = true;
             }
 
-            string path = "Assets/file.png";
+            Icon = GetIcon();
+        }
+
+        private ImageSource GetIcon()
+        {
+            string path;
 
             if (IsDirectory)
+            {
                 path = $"Assets/directory.png";
+            }
+            else
+            {
+                var extension = MimeTypeMap.GetExtension(ContentType, false);
+                if (string.IsNullOrWhiteSpace(extension) == false)
+                {
+                    var icon = IconManager.FindIconForFilename(extension, true);
+                    if (icon != null)
+                    {
+                        return icon;
+                    }
+                }
 
-            Icon = new BitmapImage(new Uri($"pack://application:,,,/{path}"));
+                path = "Assets/file.png";
+            }
+
+            return new BitmapImage(new Uri($"pack://application:,,,/{path}"));
         }
 
         public string ContentType

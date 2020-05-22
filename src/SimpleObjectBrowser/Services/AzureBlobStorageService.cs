@@ -1,10 +1,15 @@
 ﻿using Microsoft.Azure.Storage;
 using Microsoft.Azure.Storage.Blob;
+using Microsoft.Azure.Storage.Core.Util;
+
 using SimpleObjectBrowser.ViewModels;
+
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Mime;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SimpleObjectBrowser.Services
@@ -85,6 +90,23 @@ namespace SimpleObjectBrowser.Services
             }
 
             return segmentedResult.Results.OfType<CloudBlockBlob>().Select(b => new AzureBlobStorageBlob(this, b));
+        }
+
+        public async Task UploadFile(string fullName, Stream stream, string contentType, CancellationToken token, IProgress<long> progress)
+        {
+            var blob = _nativeContainer.GetBlockBlobReference(fullName);
+            blob.Properties.ContentType = contentType;
+
+            var progressHandler = new Progress<StorageProgress>();
+            progressHandler.ProgressChanged += (s, args) => progress.Report(args.BytesTransferred);
+
+            await blob.UploadFromStreamAsync(
+                stream,
+                AccessCondition.GenerateEmptyCondition(),
+                new BlobRequestOptions(),
+                new OperationContext(),
+                progressHandler,
+                token);
         }
     }
 

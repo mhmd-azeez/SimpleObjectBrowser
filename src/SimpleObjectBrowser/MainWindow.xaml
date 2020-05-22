@@ -59,14 +59,23 @@
             <!--Tabs-->
             <fluent:RibbonTabItem Header="Home">
                 <fluent:RibbonGroupBox Header="Group">
+
                     <fluent:DropDownButton x:Name="addAccountButton" Header="Add Account"
                            Icon="Assets/add-datasource.png"
-                           LargeIcon="Assets/add-datasource.png">
+                           LargeIcon="Assets/add-datasource.png" >
                         <fluent:DropDownButton.Items>
                             <MenuItem x:Name="addBlobStorageMenuItem" Header="Azure _Blob Storage" Click="addBlobStorageMenuItem_Click" />
                             <MenuItem x:Name="addS3MenuItem" Header="AWS _S3" Click="addS3MenuItem_Click" />
                         </fluent:DropDownButton.Items>
                     </fluent:DropDownButton>
+
+                    <fluent:Button x:Name="refreshButton" Header="Refresh"
+                                   Icon="Assets/refresh.png" LargeIcon="Assets/refresh.png"
+                                   Click="refreshButton_Click" />
+                    
+                    <fluent:Button x:Name="uploadFileButton" Header="Upload File(s)"
+                                   Icon="Assets/upload-file.png" LargeIcon="Assets/upload-file.png"
+                                   Click="uploadFileButton_Click" />
                 </fluent:RibbonGroupBox>
             </fluent:RibbonTabItem>
         </fluent:Ribbon>
@@ -92,6 +101,11 @@
             <GridSplitter Grid.Column="1" />
 
             <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="3*" />
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+
                 <ListView x:Name="listView" ItemsSource="{Binding SelectedBucket.Blobs, Mode=OneWay}" MouseDoubleClick="ListView_MouseDoubleClick" >
                     <ListView.View>
                         <GridView>
@@ -116,7 +130,28 @@
                     </ListView.View>
                 </ListView>
 
-                <Grid Visibility="{Binding SelectedBucket.IsBusy, Converter={StaticResource bool2Vis}, FallbackValue={x:Static local:App.Collapsed}}" Background="White" Opacity="0.5">
+                <ListView x:Name="taskListView" ItemsSource="{Binding Tasks, Mode=OneWay}" Grid.Row="1" >
+                    <ListView.View>
+                        <GridView>
+                            <GridView.Columns>
+                                <GridViewColumn Header="Text" DisplayMemberBinding="{Binding Text}" Width="400" />
+                                <GridViewColumn Header="Progress" Width="250">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding Progress, Mode=OneWay, StringFormat='p1'}" Margin="0, 0, 0, 5" />
+                                                <ProgressBar Value="{Binding Progress, Mode=OneWay}" Width="200" Height="10" Maximum="1" Minimum="0" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                            </GridView.Columns>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+
+                <Grid Visibility="{Binding SelectedBucket.IsBusy, Converter={StaticResource bool2Vis}, FallbackValue={x:Static local:App.Collapsed}}"
+                      Background="White" Opacity="0.5" Grid.RowSpan="2">
                     <Image HorizontalAlignment="Center" VerticalAlignment="Center"
                        Visibility="{Binding IsBusy, Converter={StaticResource bool2Vis}}"
                        Stretch="None"

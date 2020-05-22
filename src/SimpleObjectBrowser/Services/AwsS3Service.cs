@@ -1,10 +1,14 @@
 ﻿using Amazon.S3;
 using Amazon.S3.Model;
+
 using SimpleObjectBrowser.ViewModels;
+
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SimpleObjectBrowser.Services
@@ -89,7 +93,9 @@ namespace SimpleObjectBrowser.Services
                     Key = blob.Key
                 });
 
-                blobs.Add(new S3Blob(this, blob, metadata.Metadata));
+                var contentType = metadata.Headers.ContentType;
+
+                blobs.Add(new S3Blob(this, blob, contentType));
             }
 
             foreach (var p in response.CommonPrefixes)
@@ -98,6 +104,24 @@ namespace SimpleObjectBrowser.Services
             }
 
             return blobs;
+        }
+
+        public async Task UploadFile(string fullName, Stream stream, string contentType, CancellationToken token, IProgress<long> progress)
+        {
+            var request = new PutObjectRequest
+            {
+                BucketName = _nativeBucket.BucketName,
+                ContentType = contentType,
+                InputStream = stream,
+                Key = fullName,
+            };
+
+            request.StreamTransferProgress += (s, args) =>
+            {
+                progress.Report(args.TransferredBytes);
+            };
+
+            await _client.PutObjectAsync(request, token);
         }
     }
 
@@ -119,15 +143,14 @@ namespace SimpleObjectBrowser.Services
     {
         private S3Object _nativeBlob;
 
-        public S3Blob(S3Bucket s3Bucket, S3Object nativeBlob, MetadataCollection metadata)
+        public S3Blob(S3Bucket s3Bucket, S3Object nativeBlob, string contentType)
         {
             Bucket = s3Bucket;
             _nativeBlob = nativeBlob;
             Name = _nativeBlob.Key;
             Length = _nativeBlob.Size;
             LastModified = _nativeBlob.LastModified;
-            ContentType = metadata["Content-Type"];
-            // TODO: ContentType
+            ContentType = contentType;
         }
 
         public IStorageBucket Bucket { get; }
