@@ -11,6 +11,7 @@ namespace SimpleObjectBrowser.Services
         string Name { get; }
 
         Task<IEnumerable<IEntry>> ListEntriesAsync(string prefix, bool heirarchical);
-        Task UploadFile(string fullName, Stream stream, string contentType, CancellationToken token, IProgress<long> progress);
+        Task UploadBlob(string fullName, Stream stream, string contentType, CancellationToken token, IProgress<long> progress);
+        Task DeleteBlobs(IEnumerable<string> keys, CancellationToken token);
     }
 }

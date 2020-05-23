@@ -41,6 +41,10 @@
                 </DataTemplate>
             </xaml:TreeItemTemplateSelector.BucketTemplate>
         </xaml:TreeItemTemplateSelector>
+
+        <ContextMenu x:Key="entryContextMenu">
+            <MenuItem x:Name="deleteEntryMenuItem" Header="Delete" Click="deleteEntryMenuItem_Click" />
+        </ContextMenu>
     </fluent:RibbonWindow.Resources>
 
     <Grid>
@@ -73,9 +77,13 @@
                                    Icon="Assets/refresh.png" LargeIcon="Assets/refresh.png"
                                    Click="refreshButton_Click" />
                     
-                    <fluent:Button x:Name="uploadFileButton" Header="Upload File(s)"
+                    <fluent:Button x:Name="uploadFilesButton" Header="Upload File(s)"
                                    Icon="Assets/upload-file.png" LargeIcon="Assets/upload-file.png"
                                    Click="uploadFileButton_Click" />
+                    
+                    <fluent:Button x:Name="deleteEntriesButton" Header="Delete"
+                                   Icon="Assets/delete.png" LargeIcon="Assets/delete.png"
+                                   Click="deleteEntriesButton_Click" />
                 </fluent:RibbonGroupBox>
             </fluent:RibbonTabItem>
         </fluent:Ribbon>
@@ -106,7 +114,9 @@
                     <RowDefinition />
                 </Grid.RowDefinitions>
 
-                <ListView x:Name="listView" ItemsSource="{Binding SelectedBucket.Blobs, Mode=OneWay}" MouseDoubleClick="ListView_MouseDoubleClick" >
+                <ListView x:Name="listView" SelectionMode="Multiple"
+                          ItemsSource="{Binding SelectedBucket.Blobs, Mode=OneWay}"
+                          MouseDoubleClick="ListView_MouseDoubleClick" PreviewMouseDown="listView_PreviewMouseDown">
                     <ListView.View>
                         <GridView>
                             <GridView.Columns>
@@ -128,6 +138,11 @@
                             </GridView.Columns>
                         </GridView>
                     </ListView.View>
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="ContextMenu" Value="{StaticResource entryContextMenu}" />
+                        </Style>
+                    </ListView.ItemContainerStyle>
                 </ListView>
 
                 <ListView x:Name="taskListView" ItemsSource="{Binding Tasks, Mode=OneWay}" Grid.Row="1" >

@@ -7,6 +7,7 @@ using SimpleObjectBrowser.Views;
 
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -129,6 +130,24 @@ namespace SimpleObjectBrowser
         private void refreshButton_Click(object sender, RoutedEventArgs e)
         {
             _viewModel.Refresh();
+        }
+
+        private void deleteEntryMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            var blobs = listView.SelectedItems.OfType<BlobViewModel>().ToArray();
+            _viewModel.DeleteBlobs(blobs);
+        }
+
+        private void listView_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.RightButton == MouseButtonState.Pressed)
+                e.Handled = true;
+        }
+
+        private void deleteEntriesButton_Click(object sender, RoutedEventArgs e)
+        {
+            var blobs = listView.SelectedItems.OfType<BlobViewModel>().ToArray();
+            _viewModel.DeleteBlobs(blobs);
         }
     }
 }

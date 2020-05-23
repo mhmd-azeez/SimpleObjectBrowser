@@ -70,7 +70,7 @@ namespace SimpleObjectBrowser.ViewModels
                 }
             });
 
-            var task = new UploadFilesTaskViewModel(files, Prefix, SelectedBucket.NativeBucket);
+            var task = new UploadBlobsTaskViewModel(files, Prefix, SelectedBucket.NativeBucket);
             AddTask(task);
         }
 
@@ -98,6 +98,16 @@ namespace SimpleObjectBrowser.ViewModels
             {
                 MessageBox.Show(ex.Message);
             }
+        }
+
+        internal void DeleteBlobs(IEnumerable<BlobViewModel> blobs)
+        {
+            var prefixes = blobs.Select(b => b.FullName).ToArray();
+
+            if (SelectedBucket is null || prefixes.Length == 0) return;
+
+            var task = new DeleteBlobsTaskViewModel(prefixes, SelectedBucket.NativeBucket);
+            AddTask(task);
         }
     }
 }

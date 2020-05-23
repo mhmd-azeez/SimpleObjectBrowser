@@ -106,7 +106,7 @@ namespace SimpleObjectBrowser.Services
             return blobs;
         }
 
-        public async Task UploadFile(string fullName, Stream stream, string contentType, CancellationToken token, IProgress<long> progress)
+        public async Task UploadBlob(string fullName, Stream stream, string contentType, CancellationToken token, IProgress<long> progress)
         {
             var request = new PutObjectRequest
             {
@@ -122,6 +122,19 @@ namespace SimpleObjectBrowser.Services
             };
 
             await _client.PutObjectAsync(request, token);
+        }
+
+        public async Task DeleteBlobs(IEnumerable<string> keys, CancellationToken token)
+        {
+            // TODO: Batch into 1000 items...
+            var kvs = keys.Select(k => new KeyVersion { Key = k }).ToList();
+
+            var response = await _client.DeleteObjectsAsync(new DeleteObjectsRequest
+            {
+                BucketName = _nativeBucket.BucketName,
+                Objects = kvs,
+                Quiet = true
+            }, token);
         }
     }
 

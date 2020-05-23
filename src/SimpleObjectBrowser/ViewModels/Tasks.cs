@@ -6,11 +6,33 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.ComTypes;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace SimpleObjectBrowser.ViewModels
 {
+    public static class PathHelper
+    {
+        public static string Combine(params string[] parts)
+        {
+            if (parts.Length == 0)
+                return string.Empty;
+
+            var path = new StringBuilder(parts[0]);
+
+            for (int i = 1; i < parts.Length; i++)
+            {
+                if (path.Length > 0)
+                    path.Append($"{path}/{parts[i + 1]}");
+                else
+                    path.Append(parts[i + 1]);
+            }
+
+            return path.ToString();
+        }
+    }
+
     public abstract class TaskViewModel : BindableBase
     {
         protected CancellationTokenSource _tokenSource = new CancellationTokenSource();
@@ -75,18 +97,57 @@ namespace SimpleObjectBrowser.ViewModels
         public string ContentType { get; set; }
     }
 
-    public class UploadFilesTaskViewModel : TaskViewModel
+    public class DeleteBlobsTaskViewModel : TaskViewModel
+    {
+        private readonly IEnumerable<string> _prefixes;
+        private readonly IStorageBucket _bucket;
+
+        public DeleteBlobsTaskViewModel(string prefix, IStorageBucket bucket) : this(new[] { prefix }, bucket)
+        {
+
+        }
+
+        public DeleteBlobsTaskViewModel(IEnumerable<string> prefixes, IStorageBucket bucket)
+        {
+            _prefixes = prefixes;
+            _bucket = bucket;
+
+            Text = $"Deleting {prefixes.Count()} files...";
+        }
+
+        public async override Task StartAsync()
+        {
+            try
+            {
+                var keys = new List<string>();
+
+                foreach (var prefix in _prefixes)
+                {
+                    var expanded = await _bucket.ListEntriesAsync(prefix, false);
+                    keys.AddRange(expanded.Select(i => i.Name));
+                }
+
+                await _bucket.DeleteBlobs(keys, _tokenSource.Token);
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
+    }
+
+    public class UploadBlobsTaskViewModel : TaskViewModel
     {
         private readonly IEnumerable<FileInfo> _files;
         private readonly string _prefix;
         private readonly IStorageBucket _bucket;
 
-        public UploadFilesTaskViewModel(FileInfo file, string prefix, IStorageBucket bucket) : this(new[] { file }, prefix, bucket)
+        public UploadBlobsTaskViewModel(FileInfo file, string prefix, IStorageBucket bucket) : this(new[] { file }, prefix, bucket)
         {
 
         }
 
-        public UploadFilesTaskViewModel(IEnumerable<FileInfo> files, string prefix, IStorageBucket bucket)
+        public UploadBlobsTaskViewModel(IEnumerable<FileInfo> files, string prefix, IStorageBucket bucket)
         {
             _files = files;
             _prefix = prefix;
@@ -117,14 +178,11 @@ namespace SimpleObjectBrowser.ViewModels
                         Progress = (done + transferred) / total;
                     };
 
-                    // TODO: Encode name
-                    var fullName = file.Name;
-                    if (string.IsNullOrWhiteSpace(_prefix) == false)
-                        fullName = $"{_prefix}/{file.Name}";
+                    var fullName = PathHelper.Combine(_prefix, file.Name);
 
                     using (var stream = file.OpenStream())
                     {
-                        await _bucket.UploadFile(fullName, stream, file.ContentType, _tokenSource.Token, progress);
+                        await _bucket.UploadBlob(fullName, stream, file.ContentType, _tokenSource.Token, progress);
                     }
 
                     done += file.Length;

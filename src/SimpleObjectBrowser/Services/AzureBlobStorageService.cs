@@ -92,7 +92,7 @@ namespace SimpleObjectBrowser.Services
             return segmentedResult.Results.OfType<CloudBlockBlob>().Select(b => new AzureBlobStorageBlob(this, b));
         }
 
-        public async Task UploadFile(string fullName, Stream stream, string contentType, CancellationToken token, IProgress<long> progress)
+        public async Task UploadBlob(string fullName, Stream stream, string contentType, CancellationToken token, IProgress<long> progress)
         {
             var blob = _nativeContainer.GetBlockBlobReference(fullName);
             blob.Properties.ContentType = contentType;
@@ -107,6 +107,17 @@ namespace SimpleObjectBrowser.Services
                 new OperationContext(),
                 progressHandler,
                 token);
+        }
+
+        public async Task DeleteBlobs(IEnumerable<string> keys, CancellationToken token)
+        {
+            foreach (var key in keys)
+            {
+                token.ThrowIfCancellationRequested();
+
+                var blob = _nativeContainer.GetBlobReference(key);
+                var result = await blob.DeleteIfExistsAsync(token);
+            }
         }
     }
 
