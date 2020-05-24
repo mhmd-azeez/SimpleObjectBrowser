@@ -115,39 +115,15 @@ namespace SimpleObjectBrowser
             _viewModel.SaveAccounts();
         }
 
-        private void uploadFileButton_Click(object sender, RoutedEventArgs e)
-        {
-            var dialog = new OpenFileDialog();
-            dialog.Multiselect = true;
-            var result = dialog.ShowDialog();
-
-            if (result == true)
-            {
-                _viewModel.UploadFile(dialog.FileNames);
-            }
-        }
-
-        private void refreshButton_Click(object sender, RoutedEventArgs e)
-        {
-            _viewModel.Refresh();
-        }
-
-        private void deleteEntryMenuItem_Click(object sender, RoutedEventArgs e)
-        {
-            var blobs = listView.SelectedItems.OfType<BlobViewModel>().ToArray();
-            _viewModel.DeleteBlobs(blobs);
-        }
-
         private void listView_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.RightButton == MouseButtonState.Pressed)
                 e.Handled = true;
         }
 
-        private void deleteEntriesButton_Click(object sender, RoutedEventArgs e)
+        private void listView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            var blobs = listView.SelectedItems.OfType<BlobViewModel>().ToArray();
-            _viewModel.DeleteBlobs(blobs);
+            _viewModel.SelectedBlobs = listView.SelectedItems.OfType<BlobViewModel>().ToArray();
         }
     }
 }

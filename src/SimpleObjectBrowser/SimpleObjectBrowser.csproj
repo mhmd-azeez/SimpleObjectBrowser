@@ -118,6 +118,7 @@
     </Compile>
     <Compile Include="Xaml\LengthConverter.cs" />
     <Compile Include="Xaml\TreeItemTemplateSelector.cs" />
+    <Compile Include="Xaml\GridViewColumnHelper.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

@@ -24,9 +24,9 @@ namespace SimpleObjectBrowser.ViewModels
             for (int i = 1; i < parts.Length; i++)
             {
                 if (path.Length > 0)
-                    path.Append($"{path}/{parts[i + 1]}");
+                    path.Append($"{path}/{parts[i]}");
                 else
-                    path.Append(parts[i + 1]);
+                    path.Append(parts[i]);
             }
 
             return path.ToString();
@@ -51,39 +51,32 @@ namespace SimpleObjectBrowser.ViewModels
             protected set { Set(ref _progress, value); }
         }
 
-        public event EventHandler Failed;
+        private bool _isIndeterminate;
+        public bool IsIndeterminate
+        {
+            get { return _isIndeterminate; }
+            set { Set(ref _isIndeterminate, value); }
+        }
+
+        public event EventHandler<string> Failed;
         public event EventHandler Succeeded;
+        public event EventHandler Completed;
 
-        private bool _hasFailed;
-        public bool HasFailed
+        protected void OnFailed(string message)
         {
-            get { return _hasFailed; }
-            set { Set(ref _hasFailed, value); }
+            Failed?.Invoke(this, message);
+            Completed?.Invoke(this, EventArgs.Empty);
         }
-
-        private bool _hasSucceeded;
-        public bool HasSucceeded
+        protected void OnSucceeded()
         {
-            get { return _hasSucceeded; }
-            set { Set(ref _hasSucceeded, value); }
-        }
-
-        private void OnFailed()
-        {
-            HasFailed = true;
-            HasSucceeded = false;
-            Failed?.Invoke(this, EventArgs.Empty);
-        }
-        private void OnSucceeded()
-        {
-            HasFailed = false;
-            HasSucceeded = true;
             Succeeded?.Invoke(this, EventArgs.Empty);
+            Completed?.Invoke(this, EventArgs.Empty);
         }
 
         public void Cancel()
         {
             _tokenSource.Cancel();
+            OnSucceeded();
         }
 
         public abstract Task StartAsync();
@@ -112,7 +105,8 @@ namespace SimpleObjectBrowser.ViewModels
             _prefixes = prefixes;
             _bucket = bucket;
 
-            Text = $"Deleting {prefixes.Count()} files...";
+            Text = $"Deleting {prefixes.Count()} blobs...";
+            IsIndeterminate = true;
         }
 
         public async override Task StartAsync()
@@ -128,10 +122,11 @@ namespace SimpleObjectBrowser.ViewModels
                 }
 
                 await _bucket.DeleteBlobs(keys, _tokenSource.Token);
+                OnSucceeded();
             }
             catch (Exception ex)
             {
-                throw;
+                OnFailed(ex.Message);
             }
         }
     }
@@ -189,10 +184,12 @@ namespace SimpleObjectBrowser.ViewModels
                     processed++;
                     Progress = done / total;
                 }
+
+                OnSucceeded();
             }
             catch (Exception ex)
             {
-                throw;
+                OnFailed(ex.Message);
             }
         }
     }

@@ -43,8 +43,12 @@
         </xaml:TreeItemTemplateSelector>
 
         <ContextMenu x:Key="entryContextMenu">
-            <MenuItem x:Name="deleteEntryMenuItem" Header="Delete" Click="deleteEntryMenuItem_Click" />
+            <MenuItem x:Name="deleteEntryMenuItem" Header="Delete" Command="{Binding DataContext.DeleteBlobsCommand, RelativeSource={RelativeSource AncestorType=ListView}}" />
         </ContextMenu>
+
+        <Style TargetType="ListViewItem">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        </Style>
     </fluent:RibbonWindow.Resources>
 
     <Grid>
@@ -75,15 +79,15 @@
 
                     <fluent:Button x:Name="refreshButton" Header="Refresh"
                                    Icon="Assets/refresh.png" LargeIcon="Assets/refresh.png"
-                                   Click="refreshButton_Click" />
+                                   Command="{Binding RefreshCommand}" />
                     
                     <fluent:Button x:Name="uploadFilesButton" Header="Upload File(s)"
                                    Icon="Assets/upload-file.png" LargeIcon="Assets/upload-file.png"
-                                   Click="uploadFileButton_Click" />
+                                   Command="{Binding UploadFilesCommand}" />
                     
                     <fluent:Button x:Name="deleteEntriesButton" Header="Delete"
                                    Icon="Assets/delete.png" LargeIcon="Assets/delete.png"
-                                   Click="deleteEntriesButton_Click" />
+                                   Command="{Binding DeleteBlobsCommand}" />
                 </fluent:RibbonGroupBox>
             </fluent:RibbonTabItem>
         </fluent:Ribbon>
@@ -91,7 +95,7 @@
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="5" />
+                <ColumnDefinition Width="3" />
                 <ColumnDefinition Width="3*" />
             </Grid.ColumnDefinitions>
 
@@ -106,19 +110,21 @@
                 </TreeView>
             </Grid>
 
-            <GridSplitter Grid.Column="1" />
+            <GridSplitter Grid.Column="1" Width="3" HorizontalAlignment="Stretch" />
 
             <Grid Grid.Column="2">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="3*" />
+                    <RowDefinition Height="5" />
                     <RowDefinition />
                 </Grid.RowDefinitions>
 
-                <ListView x:Name="listView" SelectionMode="Multiple"
+                <ListView x:Name="listView" SelectionMode="Extended"
                           ItemsSource="{Binding SelectedBucket.Blobs, Mode=OneWay}"
+                          SelectionChanged="listView_SelectionChanged"
                           MouseDoubleClick="ListView_MouseDoubleClick" PreviewMouseDown="listView_PreviewMouseDown">
                     <ListView.View>
-                        <GridView>
+                        <GridView xaml:GridViewColumnHelper.UsePercentagesFor="{Binding ElementName=listView}">
                             <GridView.Columns>
                                 <GridViewColumn Width="30">
                                     <GridViewColumn.CellTemplate>
@@ -128,7 +134,7 @@
                                     </GridViewColumn.CellTemplate>
                                 </GridViewColumn>
                                 <GridViewColumn Header="Name"
-                              DisplayMemberBinding="{Binding Name}" Width="200" />
+                              DisplayMemberBinding="{Binding Name}" xaml:GridViewColumnHelper.WidthPercent="1" />
                                 <GridViewColumn Header="Length"
                               DisplayMemberBinding="{Binding Length, Converter={StaticResource lengthConverter}}"
                               Width="100" />
@@ -145,21 +151,21 @@
                     </ListView.ItemContainerStyle>
                 </ListView>
 
-                <ListView x:Name="taskListView" ItemsSource="{Binding Tasks, Mode=OneWay}" Grid.Row="1" >
+                <GridSplitter Grid.Row="1" Height="3" HorizontalAlignment="Stretch" />
+
+                <ListView x:Name="taskListView" ItemsSource="{Binding Tasks, Mode=OneWay}" Grid.Row="2" >
                     <ListView.View>
-                        <GridView>
+                        <GridView xaml:GridViewColumnHelper.UsePercentagesFor="{Binding ElementName=taskListView}">
                             <GridView.Columns>
-                                <GridViewColumn Header="Text" DisplayMemberBinding="{Binding Text}" Width="400" />
                                 <GridViewColumn Header="Progress" Width="250">
                                     <GridViewColumn.CellTemplate>
                                         <DataTemplate>
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="{Binding Progress, Mode=OneWay, StringFormat='p1'}" Margin="0, 0, 0, 5" />
-                                                <ProgressBar Value="{Binding Progress, Mode=OneWay}" Width="200" Height="10" Maximum="1" Minimum="0" />
-                                            </StackPanel>
+                                            <ProgressBar Value="{Binding Progress, Mode=OneWay}" IsIndeterminate="{Binding IsIndeterminate}" Height="10" Maximum="1" Minimum="0" />
                                         </DataTemplate>
                                     </GridViewColumn.CellTemplate>
                                 </GridViewColumn>
+                                <GridViewColumn Header="Text" xaml:GridViewColumnHelper.WidthPercent="1"
+                                                DisplayMemberBinding="{Binding Text}" Width="400" />
                             </GridView.Columns>
                         </GridView>
                     </ListView.View>

@@ -14,6 +14,13 @@ namespace SimpleObjectBrowser.ViewModels
 {
     public class MainWindowViewModel : BindableBase
     {
+        public MainWindowViewModel()
+        {
+            DeleteBlobsCommand = new DelegateCommand(p => DeleteBlobs(SelectedBlobs), p => SelectedBlobs?.Count > 0);
+            RefreshCommand = new DelegateCommand(p => Refresh(), p => SelectedBucket != null);
+            UploadFilesCommand = new DelegateCommand(p => UploadFiles(), p => SelectedBucket != null);
+        }
+
         private string _prefix;
         public string Prefix
         {
@@ -35,24 +42,55 @@ namespace SimpleObjectBrowser.ViewModels
             private set { Set(ref _tasks, value); }
         }
 
+        private IList<BlobViewModel> _selectedBlobs;
+        public IList<BlobViewModel> SelectedBlobs
+        {
+            get { return _selectedBlobs; }
+            set
+            {
+                if (Set(ref _selectedBlobs, value))
+                {
+                    DeleteBlobsCommand.RaiseCanExecuteChanged();
+                }
+            }
+        }
+
         private BucketViewModel _selectedBucket;
         public BucketViewModel SelectedBucket
         {
             get { return _selectedBucket; }
-            set { Set(ref _selectedBucket, value); }
+            set
+            {
+                if (Set(ref _selectedBucket, value))
+                {
+                    RefreshCommand.RaiseCanExecuteChanged();
+                    UploadFilesCommand.RaiseCanExecuteChanged();
+                }
+            }
         }
+
+        public DelegateCommand DeleteBlobsCommand { get; }
+        public DelegateCommand RefreshCommand { get; }
+        public DelegateCommand UploadFilesCommand { get; }
 
         public void SaveAccounts()
         {
             ConfigService.SaveAccounts(Accounts);
         }
 
-        public void UploadFile(IEnumerable<string> paths)
+        public void UploadFiles()
         {
             if (SelectedBucket is null)
                 return;
 
-            var files = paths.Select(p =>
+            var dialog = new OpenFileDialog();
+            dialog.Multiselect = true;
+            var result = dialog.ShowDialog();
+
+            if (result != true)
+                return;
+
+            var files = dialog.FileNames.Select(p =>
             {
                 var name = p.Split('\\').Last();
                 var extension = name.Split('.').Last();
@@ -78,7 +116,24 @@ namespace SimpleObjectBrowser.ViewModels
         {
             task.Succeeded += Task_Succeeded;
             Tasks.Add(task);
+
+            task.Completed += Task_Completed;
+            task.Failed += Task_Failed;
+
             _ = task.StartAsync();
+
+            void Task_Completed(object sender, EventArgs e)
+            {
+                task.Completed -= Task_Completed;
+                task.Failed -= Task_Failed;
+                Tasks.Remove(task);
+                Refresh();
+            }
+
+            void Task_Failed(object sender, string e)
+            {
+                MessageBox.Show(e, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void Task_Succeeded(object sender, EventArgs e)
@@ -100,8 +155,12 @@ namespace SimpleObjectBrowser.ViewModels
             }
         }
 
-        internal void DeleteBlobs(IEnumerable<BlobViewModel> blobs)
+        internal void DeleteBlobs(IList<BlobViewModel> blobs)
         {
+            var response = MessageBox.Show($"Are you sure you want to delete these {blobs.Count} items?", "Confirm", MessageBoxButton.YesNo);
+            if (response != MessageBoxResult.Yes)
+                return;
+
             var prefixes = blobs.Select(b => b.FullName).ToArray();
 
             if (SelectedBucket is null || prefixes.Length == 0) return;
