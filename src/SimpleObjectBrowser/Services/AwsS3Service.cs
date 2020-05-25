@@ -99,7 +99,7 @@ namespace SimpleObjectBrowser.Services
                     Key = blob.Key
                 });
 
-                var contentType = metadata.Headers.ContentType;
+                var contentType = metadata.Headers.ContentType.Split(';').First();
 
                 blobs.Add(new S3Blob(this, blob, contentType));
             }
@@ -115,6 +115,7 @@ namespace SimpleObjectBrowser.Services
 
             return new PagedResult<IEnumerable<IEntry>>(
                 blobs,
+                () => ListEntriesAsync(query, token, previous),
                 previous,
                 next);
         }

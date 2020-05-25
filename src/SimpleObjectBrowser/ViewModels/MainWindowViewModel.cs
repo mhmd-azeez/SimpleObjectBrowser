@@ -69,6 +69,19 @@ namespace SimpleObjectBrowser.ViewModels
             }
         }
 
+        private int _pageSize = 10;
+        public int PageSize
+        {
+            get { return _pageSize; }
+            set
+            {
+                if (Set(ref _pageSize, value))
+                {
+                    Load();
+                }
+            }
+        }
+
         public DelegateCommand DeleteBlobsCommand { get; }
         public DelegateCommand RefreshCommand { get; }
         public DelegateCommand UploadFilesCommand { get; }
@@ -147,7 +160,21 @@ namespace SimpleObjectBrowser.ViewModels
 
             try
             {
-                await SelectedBucket.LoadAsync(Prefix);
+                await SelectedBucket.Refresh();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        internal async void Load()
+        {
+            if (SelectedBucket is null) return;
+
+            try
+            {
+                await SelectedBucket.LoadAsync(Prefix, PageSize);
             }
             catch (Exception ex)
             {

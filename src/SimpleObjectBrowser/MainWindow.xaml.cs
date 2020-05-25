@@ -59,7 +59,7 @@ namespace SimpleObjectBrowser
                 {
                     _viewModel.Prefix = string.Empty;
                     _viewModel.SelectedBucket = bucket;
-                    _viewModel.Refresh();
+                    _viewModel.Load();
                 }
                 catch (Exception ex)
                 {
@@ -75,7 +75,7 @@ namespace SimpleObjectBrowser
                 try
                 {
                     _viewModel.Prefix = entry.FullName;
-                    _viewModel.Refresh();
+                    _viewModel.Load();
                 }
                 catch (Exception ex)
                 {

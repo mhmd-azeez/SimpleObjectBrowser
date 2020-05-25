@@ -87,7 +87,7 @@ namespace SimpleObjectBrowser.ViewModels
     {
         private string _name;
 
-        public async Task LoadAsync(string prefix)
+        public async Task LoadAsync(string prefix, int pageSize)
         {
             IsBusy = true;
             try
@@ -96,7 +96,7 @@ namespace SimpleObjectBrowser.ViewModels
                 {
                     Prefix = prefix,
                     Heirarchical =  true,
-                    PageSize = 25
+                    PageSize = pageSize
                 };
 
                 CurrentPage = await NativeBucket.ListEntriesAsync(query);
@@ -173,6 +173,25 @@ namespace SimpleObjectBrowser.ViewModels
         {
             get { return _blobs; }
             set { Set(ref _blobs, value); }
+        }
+
+        internal async Task Refresh()
+        {
+            if (CurrentPage is null)
+            {
+                return;
+            }
+
+            IsBusy = true;
+            try
+            {
+                CurrentPage = await CurrentPage.Refresh();
+                Blobs = new ObservableCollection<BlobViewModel>(CurrentPage.Result.Select(b => new BlobViewModel(this, b)));
+            }
+            finally
+            {
+                IsBusy = false;
+            }
         }
 
         public IStorageBucket NativeBucket { get; }

@@ -104,6 +104,7 @@ namespace SimpleObjectBrowser.Services
 
             return new PagedResult<IEnumerable<IEntry>>(
                 result,
+                () => ListEntriesAsync(query, token, previous),
                 previous,
                 next);
         }

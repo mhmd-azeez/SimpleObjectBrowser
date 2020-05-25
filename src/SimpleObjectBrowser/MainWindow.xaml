@@ -152,10 +152,13 @@
                     </ListView.ItemContainerStyle>
                 </ListView>
 
-                <Grid Grid.Row="1">
-                    <Button Content="Previous" x:Name="prevPageButton" Click="prevPageButton_Click" HorizontalAlignment="Left" IsEnabled="{Binding SelectedBucket.CanGoBackward, FallbackValue=False}" />
-                    <Button Content="Next" x:Name="nextPageButton" Click="nextPageButton_Click" HorizontalAlignment="Right" IsEnabled="{Binding SelectedBucket.CanGoForeward, FallbackValue=False}" />
-                </Grid>
+                <StackPanel Orientation="Horizontal" Grid.Row="1" Margin="2" HorizontalAlignment="Center">
+                    <Button Content="Previous" Padding="20, 5" x:Name="prevPageButton" Click="prevPageButton_Click" HorizontalAlignment="Left" IsEnabled="{Binding SelectedBucket.CanGoBackward, FallbackValue=False}" />
+
+                    <TextBox Text="{Binding PageSize}" Width="50" Margin="5, 0" TextAlignment="Center" VerticalContentAlignment="Center" />
+
+                    <Button Content="Next" Padding="20, 5" x:Name="nextPageButton" Click="nextPageButton_Click" HorizontalAlignment="Right" IsEnabled="{Binding SelectedBucket.CanGoForeward, FallbackValue=False}" />
+                </StackPanel>
                 
                 <GridSplitter Grid.Row="2" Height="3" HorizontalAlignment="Stretch" />
 

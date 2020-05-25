@@ -13,22 +13,29 @@ namespace SimpleObjectBrowser.Services
         Task<IPagedResult<T>> GetNextPage();
         bool HasNextPage();
         bool HasPreviousPage();
+        Task<IPagedResult<T>> Refresh();
+
         IPagedResult<T> Previous { get; }
     }
 
     public class PagedResult<T> : IPagedResult<T>
     {
+        private readonly Func<Task<IPagedResult<T>>> _resultFactory;
         private readonly Func<IPagedResult<T>, Task<IPagedResult<T>>> _next;
 
-        public PagedResult(T result, IPagedResult<T> previous = null, Func<IPagedResult<T>, Task<IPagedResult<T>>> next = null)
+        public PagedResult(
+            T result, 
+            Func<Task<IPagedResult<T>>> resultFactory, 
+            IPagedResult<T> previous = null,
+            Func<IPagedResult<T>, Task<IPagedResult<T>>> next = null)
         {
-            _next = next;
-            Previous = previous;
             Result = result;
+            _resultFactory = resultFactory;
             Previous = previous;
+            _next = next;
         }
 
-        public T Result { get; }
+        public T Result { get; private set; }
         public IPagedResult<T> Previous { get; }
 
         public Task<IPagedResult<T>> GetNextPage()
@@ -39,6 +46,11 @@ namespace SimpleObjectBrowser.Services
             }
 
             return _next(this);
+        }
+
+        public Task<IPagedResult<T>> Refresh()
+        {
+            return _resultFactory();
         }
 
         public bool HasNextPage()
