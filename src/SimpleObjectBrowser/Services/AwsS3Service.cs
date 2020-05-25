@@ -67,16 +67,22 @@ namespace SimpleObjectBrowser.Services
 
         public string Name { get; }
 
-        public async Task<IEnumerable<IEntry>> ListEntriesAsync(string prefix, bool heirarchical)
+        public Task<IPagedResult<IEnumerable<IEntry>>> ListEntriesAsync(ListQuery query)
+        {
+            return ListEntriesAsync(query, null, null);
+        }
+
+        private async Task<IPagedResult<IEnumerable<IEntry>>> ListEntriesAsync(ListQuery query, string token, IPagedResult<IEnumerable<IEntry>> previous)
         {
             var request = new ListObjectsV2Request
             {
                 BucketName = _nativeBucket.BucketName,
-                MaxKeys = 25,
-                Prefix = prefix
+                MaxKeys = query.PageSize,
+                ContinuationToken = token,
+                Prefix = query.Prefix
             };
 
-            if (heirarchical)
+            if (query.Heirarchical)
             {
                 request.Delimiter = "/";
             }
@@ -103,7 +109,14 @@ namespace SimpleObjectBrowser.Services
                 blobs.Add(new S3Directory(p, this));
             }
 
-            return blobs;
+            Func<IPagedResult<IEnumerable<IEntry>>, Task<IPagedResult<IEnumerable<IEntry>>>> next = null;
+            if (response.IsTruncated)
+                next = prev => ListEntriesAsync(query, response.NextContinuationToken, prev);
+
+            return new PagedResult<IEnumerable<IEntry>>(
+                blobs,
+                previous,
+                next);
         }
 
         public async Task UploadBlob(string fullName, Stream stream, string contentType, CancellationToken token, IProgress<long> progress)
@@ -136,6 +149,7 @@ namespace SimpleObjectBrowser.Services
                 Quiet = true
             }, token);
         }
+
     }
 
     public class S3Directory : IEntry

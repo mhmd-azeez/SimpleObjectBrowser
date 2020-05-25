@@ -70,10 +70,15 @@ namespace SimpleObjectBrowser.Services
             Name = _nativeContainer.Name;
         }
 
-        public async Task<IEnumerable<IEntry>> ListEntriesAsync(string prefix, bool heirarchical)
+        public Task<IPagedResult<IEnumerable<IEntry>>> ListEntriesAsync(ListQuery query)
+        {
+            return ListEntriesAsync(query, null, null);
+        }
+
+        private async Task<IPagedResult<IEnumerable<IEntry>>> ListEntriesAsync(ListQuery query, BlobContinuationToken token, IPagedResult<IEnumerable<IEntry>> previous)
         {
             var segmentedResult = await _nativeContainer.ListBlobsSegmentedAsync(
-                prefix, heirarchical == false, BlobListingDetails.Metadata, null, null, null, null);
+                query.Prefix, query.Heirarchical == false, BlobListingDetails.Metadata, query.PageSize, token, null, null);
 
             var entries = new List<IEntry>();
 
@@ -89,7 +94,18 @@ namespace SimpleObjectBrowser.Services
                 }
             }
 
-            return segmentedResult.Results.OfType<CloudBlockBlob>().Select(b => new AzureBlobStorageBlob(this, b));
+            var result = segmentedResult.Results.OfType<CloudBlockBlob>()
+                                                .Select(b => new AzureBlobStorageBlob(this, b))
+                                                .ToArray();
+
+            Func<IPagedResult<IEnumerable<IEntry>>, Task<IPagedResult<IEnumerable<IEntry>>>> next = null;
+            if (segmentedResult.ContinuationToken != null)
+                next = prev => ListEntriesAsync(query, segmentedResult.ContinuationToken, prev);
+
+            return new PagedResult<IEnumerable<IEntry>>(
+                result,
+                previous,
+                next);
         }
 
         public async Task UploadBlob(string fullName, Stream stream, string contentType, CancellationToken token, IProgress<long> progress)
@@ -119,6 +135,7 @@ namespace SimpleObjectBrowser.Services
                 var result = await blob.DeleteIfExistsAsync(token);
             }
         }
+
     }
 
     public class AzureDirectory : IEntry

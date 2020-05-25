@@ -117,8 +117,15 @@ namespace SimpleObjectBrowser.ViewModels
 
                 foreach (var prefix in _prefixes)
                 {
-                    var expanded = await _bucket.ListEntriesAsync(prefix, false);
-                    keys.AddRange(expanded.Select(i => i.Name));
+                    var query = new ListQuery
+                    {
+                        Prefix = prefix,
+                        Heirarchical = false,
+                        PageSize = 2500 // TODO: Expand everything!
+                    };
+
+                    var expanded = await _bucket.ListEntriesAsync(query);
+                    keys.AddRange(expanded.Result.Select(i => i.Name));
                 }
 
                 await _bucket.DeleteBlobs(keys, _tokenSource.Token);

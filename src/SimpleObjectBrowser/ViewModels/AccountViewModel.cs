@@ -4,6 +4,7 @@ using SimpleObjectBrowser.Mvvm;
 using SimpleObjectBrowser.Services;
 
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
@@ -91,13 +92,44 @@ namespace SimpleObjectBrowser.ViewModels
             IsBusy = true;
             try
             {
-                var blobs = await NativeBucket.ListEntriesAsync(prefix, true);
-                Blobs = new ObservableCollection<BlobViewModel>(blobs.Select(b => new BlobViewModel(this, b)));
+                var query = new ListQuery
+                {
+                    Prefix = prefix,
+                    Heirarchical =  true,
+                    PageSize = 25
+                };
+
+                CurrentPage = await NativeBucket.ListEntriesAsync(query);
+                Blobs = new ObservableCollection<BlobViewModel>(CurrentPage.Result.Select(b => new BlobViewModel(this, b)));
             }
             finally
             {
                 IsBusy = false;
             }
+        }
+
+        public async Task GoForeward()
+        {
+            if (CanGoForeward == false) return;
+
+            IsBusy = true;
+            try
+            {
+                CurrentPage = await CurrentPage.GetNextPage();
+                Blobs = new ObservableCollection<BlobViewModel>(CurrentPage.Result.Select(b => new BlobViewModel(this, b)));
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
+        public void GoBackward()
+        {
+            if (CanGoBackward == false) return;
+
+            CurrentPage = CurrentPage.Previous;
+            Blobs = new ObservableCollection<BlobViewModel>(CurrentPage.Result.Select(b => new BlobViewModel(this, b)));
         }
 
         public BucketViewModel(IStorageBucket bucket)
@@ -120,8 +152,23 @@ namespace SimpleObjectBrowser.ViewModels
             set { Set(ref _isBusy, value); }
         }
 
+        private bool _canGoForeward;
+        public bool CanGoForeward
+        {
+            get { return _canGoForeward; }
+            private set { Set(ref _canGoForeward, value); }
+        }
+
+        private bool _canGoBackward;
+        public bool CanGoBackward
+        {
+            get { return _canGoBackward; }
+            private set { Set(ref _canGoBackward, value); }
+        }
 
         private ObservableCollection<BlobViewModel> _blobs;
+        private IPagedResult<IEnumerable<IEntry>> _currentPage;
+
         public ObservableCollection<BlobViewModel> Blobs
         {
             get { return _blobs; }
@@ -129,6 +176,23 @@ namespace SimpleObjectBrowser.ViewModels
         }
 
         public IStorageBucket NativeBucket { get; }
+        public IPagedResult<IEnumerable<IEntry>> CurrentPage
+        {
+            get => _currentPage;
+            set
+            {
+                _currentPage = value;
+                if (_currentPage != null)
+                {
+                    CanGoBackward = _currentPage.HasPreviousPage();
+                    CanGoForeward = _currentPage.HasNextPage();
+                }
+                else
+                {
+                    CanGoBackward = CanGoForeward = false;
+                }
+            }
+        }
     }
 
     public class BlobViewModel : BindableBase

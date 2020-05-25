@@ -125,5 +125,25 @@ namespace SimpleObjectBrowser
         {
             _viewModel.SelectedBlobs = listView.SelectedItems.OfType<BlobViewModel>().ToArray();
         }
+
+        private async void nextPageButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_viewModel.SelectedBucket is null) return;
+
+            try
+            {
+                await _viewModel.SelectedBucket.GoForeward();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        private void prevPageButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_viewModel.SelectedBucket is null) return;
+            _viewModel.SelectedBucket.GoBackward();
+        }
     }
 }
