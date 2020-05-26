@@ -31,5 +31,6 @@ namespace SimpleObjectBrowser.Services
         long Length { get; }
 
         Task DownloadToStreamAsync(Stream target, IProgress<long> progress, CancellationToken token);
+        Uri GetLink(TimeSpan lifeTime);
     }
 }

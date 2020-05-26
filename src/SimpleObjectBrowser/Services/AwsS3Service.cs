@@ -218,5 +218,17 @@ namespace SimpleObjectBrowser.Services
                 }
             }
         }
+
+        public Uri GetLink(TimeSpan lifeTime)
+        {
+            var link = _client.GetPreSignedURL(new GetPreSignedUrlRequest
+            {
+                BucketName = Bucket.Name,
+                Key = Key,
+                Expires = DateTime.UtcNow.Add(lifeTime),
+            });
+
+            return new Uri(link);
+        }
     }
 }

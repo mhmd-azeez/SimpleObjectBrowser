@@ -191,5 +191,17 @@ namespace SimpleObjectBrowser.Services
                 storageProgress, 
                 token);
         }
+
+        public Uri GetLink(TimeSpan lifeTime)
+        {
+            var sas = _nativeBlob.GetSharedAccessSignature(new SharedAccessBlobPolicy
+            {
+                Permissions = SharedAccessBlobPermissions.Read,
+                SharedAccessExpiryTime = DateTimeOffset.UtcNow.Add(lifeTime),
+                SharedAccessStartTime = DateTimeOffset.UtcNow,
+            });
+
+            return new Uri(_nativeBlob.Uri.AbsoluteUri + sas);
+        }
     }
 }

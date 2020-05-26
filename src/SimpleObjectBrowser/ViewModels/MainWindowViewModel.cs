@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -21,6 +22,7 @@ namespace SimpleObjectBrowser.ViewModels
             RefreshCommand = new DelegateCommand(p => Refresh(), p => SelectedBucket != null);
             UploadFilesCommand = new DelegateCommand(p => UploadFiles(), p => SelectedBucket != null);
             UpCommand = new DelegateCommand(p => Up(), p => Prefix?.Length > 0);
+            CopyLinkCommand = new DelegateCommand(p => CopyLink(), p => SelectedBlobs?.Count > 0);
         }
 
         private string _prefix;
@@ -60,6 +62,7 @@ namespace SimpleObjectBrowser.ViewModels
                 {
                     DeleteBlobsCommand.RaiseCanExecuteChanged();
                     DownloadBlobsCommand.RaiseCanExecuteChanged();
+                    CopyLinkCommand.RaiseCanExecuteChanged();
                 }
             }
         }
@@ -96,6 +99,7 @@ namespace SimpleObjectBrowser.ViewModels
         public DelegateCommand UploadFilesCommand { get; }
         public DelegateCommand DownloadBlobsCommand { get; }
         public DelegateCommand UpCommand { get; }
+        public DelegateCommand CopyLinkCommand { get; }
 
         public void SaveAccounts()
         {
@@ -122,6 +126,45 @@ namespace SimpleObjectBrowser.ViewModels
 
                 var entries = SelectedBlobs.Select(b => b.NativeBlob).ToList();
                 AddTask(new DownloadBlobsTaskViewModel(dialog.SelectedPath, entries));
+            }
+        }
+
+        private async void CopyLink()
+        {
+            if (SelectedBlobs?.Count < 0)
+                return;
+
+            SelectedBucket.IsBusy = true;
+
+            try
+            {
+                var blobs = new List<IBlob>();
+
+                blobs.AddRange(SelectedBlobs.Select(b => b.NativeBlob).OfType<IBlob>());
+
+                foreach (var dirVm in SelectedBlobs.Where(b => b.IsDirectory))
+                {
+                    var children = await dirVm.NativeBlob.ListAllBlobsAsync();
+                    blobs.AddRange(children);
+                }
+
+                var builder = new StringBuilder();
+
+                foreach (var blob in blobs)
+                {
+                    var link = blob.GetLink(TimeSpan.FromHours(24));
+                    builder.AppendLine(link.AbsoluteUri);
+                }
+
+                Clipboard.SetText(builder.ToString());
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            finally
+            {
+                SelectedBucket.IsBusy = false;
             }
         }
 
