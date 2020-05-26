@@ -160,6 +160,7 @@ namespace SimpleObjectBrowser.Services
         public long Length { get; }
         public DateTimeOffset? LastModified { get; }
         public string ContentType { get; }
+        public string Tier { get; }
 
         public AzureBlobStorageBlob(AzureBlobStorageContainer container, CloudBlockBlob nativeBlob)
         {
@@ -169,6 +170,9 @@ namespace SimpleObjectBrowser.Services
             Length = nativeBlob.Properties.Length;
             LastModified = nativeBlob.Properties.LastModified;
             ContentType = nativeBlob.Properties.ContentType;
+
+            if (nativeBlob.Properties.StandardBlobTier != null)
+                Tier = Enum.GetName(typeof(StandardBlobTier), nativeBlob.Properties.StandardBlobTier);
         }
 
         public bool IsDirectory => false;
@@ -184,11 +188,11 @@ namespace SimpleObjectBrowser.Services
             };
 
             await _nativeBlob.DownloadToStreamAsync(
-                target, 
-                AccessCondition.GenerateEmptyCondition(), 
-                new BlobRequestOptions(), 
-                new OperationContext(), 
-                storageProgress, 
+                target,
+                AccessCondition.GenerateEmptyCondition(),
+                new BlobRequestOptions(),
+                new OperationContext(),
+                storageProgress,
                 token);
         }
 

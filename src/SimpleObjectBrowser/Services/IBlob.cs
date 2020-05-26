@@ -29,6 +29,7 @@ namespace SimpleObjectBrowser.Services
         string ContentType { get; }
         DateTimeOffset? LastModified { get; }
         long Length { get; }
+        string Tier { get; }
 
         Task DownloadToStreamAsync(Stream target, IProgress<long> progress, CancellationToken token);
         Uri GetLink(TimeSpan lifeTime);

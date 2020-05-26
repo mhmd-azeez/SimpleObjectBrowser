@@ -168,6 +168,9 @@
                                 <GridViewColumn Header="Content Type"
                               DisplayMemberBinding="{Binding ContentType}"
                               Width="100" />
+                                <GridViewColumn Header="Tier"
+                              DisplayMemberBinding="{Binding Tier}"
+                              Width="100" />
                             </GridView.Columns>
                         </GridView>
                     </ListView.View>

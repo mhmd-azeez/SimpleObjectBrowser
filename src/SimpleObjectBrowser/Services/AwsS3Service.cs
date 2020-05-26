@@ -185,6 +185,8 @@ namespace SimpleObjectBrowser.Services
 
             if (contentType != null)
                 ContentTypeIsInferred = true;
+
+            Tier = nativeBlob.StorageClass?.Value;
         }
 
         public IStorageBucket Bucket { get; }
@@ -230,5 +232,7 @@ namespace SimpleObjectBrowser.Services
 
             return new Uri(link);
         }
+
+        public string Tier { get; }
     }
 }

@@ -237,6 +237,13 @@ namespace SimpleObjectBrowser.ViewModels
             set { Set(ref _fullName, value); }
         }
 
+        private string _tier;
+        public string Tier
+        {
+            get { return _tier; }
+            set { Set(ref _tier, value); }
+        }
+
         private long? _length;
         public long? Length
         {
@@ -272,6 +279,7 @@ namespace SimpleObjectBrowser.ViewModels
                 LastModified = blob.LastModified;
                 Length = blob.Length;
                 ContentType = blob.ContentType;
+                Tier = blob.Tier;
             }
             else
             {
