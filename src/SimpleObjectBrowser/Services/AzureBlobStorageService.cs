@@ -82,21 +82,15 @@ namespace SimpleObjectBrowser.Services
 
             var entries = new List<IEntry>();
 
-            foreach (var entry in segmentedResult.Results)
+            foreach (var directory in segmentedResult.Results.OfType<CloudBlobDirectory>())
             {
-                if (entry is CloudBlockBlob blob)
-                {
-                    entries.Add(new AzureBlobStorageBlob(this, blob));
-                }
-                else if (entry is CloudBlobDirectory directory)
-                {
-                    entries.Add(new AzureDirectory(this, directory.Prefix));
-                }
+                entries.Add(new AzureDirectory(this, directory.Prefix));
             }
 
-            var result = segmentedResult.Results.OfType<CloudBlockBlob>()
-                                                .Select(b => new AzureBlobStorageBlob(this, b))
-                                                .ToArray();
+            foreach (var blob in segmentedResult.Results.OfType<CloudBlockBlob>())
+            {
+                entries.Add(new AzureBlobStorageBlob(this, blob));
+            }
 
             Func<IPagedResult<IEnumerable<IEntry>>, Task<IPagedResult<IEnumerable<IEntry>>>> next = null;
             if (segmentedResult.ContinuationToken != null)
@@ -107,7 +101,7 @@ namespace SimpleObjectBrowser.Services
             return new PagedResult<IEnumerable<IEntry>>(
                 query.PageSize,
                 currentPageNumber,
-                result,
+                entries,
                 () => ListEntriesAsync(query, token, previous),
                 previous,
                 next);
