@@ -32,9 +32,9 @@ namespace SimpleObjectBrowser.ViewModels
             return path.ToString();
         }
 
-        public static string GetPrefix(string key, char delimiter = '/')
+        public static string GetParent(string key, char delimiter = '/')
         {
-            var parts = key.Split(delimiter);
+            var parts = key.Split(new[] { delimiter }, StringSplitOptions.RemoveEmptyEntries);
 
             var builder = new StringBuilder();
 
@@ -259,7 +259,7 @@ namespace SimpleObjectBrowser.ViewModels
                         Progress = (done + transferred) / total;
                     };
 
-                    var path = Path.Combine(_localFolderPath, PathHelper.GetPrefix(blob.Key));
+                    var path = Path.Combine(_localFolderPath, PathHelper.GetParent(blob.Key));
                     if (Directory.Exists(path) == false)
                     {
                         Directory.CreateDirectory(path);

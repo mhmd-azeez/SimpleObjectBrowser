@@ -20,14 +20,20 @@ namespace SimpleObjectBrowser.ViewModels
             DownloadBlobsCommand = new DelegateCommand(p => DownloadBlobs(), p => SelectedBlobs?.Count > 0);
             RefreshCommand = new DelegateCommand(p => Refresh(), p => SelectedBucket != null);
             UploadFilesCommand = new DelegateCommand(p => UploadFiles(), p => SelectedBucket != null);
-
+            UpCommand = new DelegateCommand(p => Up(), p => Prefix?.Length > 0);
         }
 
         private string _prefix;
         public string Prefix
         {
             get { return _prefix; }
-            set { Set(ref _prefix, value); }
+            set
+            {
+                if (Set(ref _prefix, value))
+                {
+                    UpCommand.RaiseCanExecuteChanged();
+                }
+            }
         }
 
         private ObservableCollection<AccountViewModel> _accounts = new ObservableCollection<AccountViewModel>();
@@ -89,10 +95,17 @@ namespace SimpleObjectBrowser.ViewModels
         public DelegateCommand RefreshCommand { get; }
         public DelegateCommand UploadFilesCommand { get; }
         public DelegateCommand DownloadBlobsCommand { get; }
+        public DelegateCommand UpCommand { get; }
 
         public void SaveAccounts()
         {
             ConfigService.SaveAccounts(Accounts);
+        }
+
+        public void Up()
+        {
+            Prefix = PathHelper.GetParent(Prefix);
+            Load();
         }
 
         public void DownloadBlobs()
