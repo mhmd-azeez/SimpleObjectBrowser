@@ -91,6 +91,10 @@
                                    Icon="Assets/download-blobs.png" LargeIcon="Assets/download-blobs.png"
                                    Command="{Binding DownloadBlobsCommand}" />
 
+                    <fluent:Button x:Name="copyLinkButton" Header="Copy Link"
+                                   Icon="Assets/link.png" LargeIcon="Assets/link.png"
+                                   Command="{Binding CopyLinkCommand}" />
+
                     <fluent:Button x:Name="deleteEntriesButton" Header="Delete"
                                    Icon="Assets/delete.png" LargeIcon="Assets/delete.png"
                                    Command="{Binding DeleteBlobsCommand}" />
