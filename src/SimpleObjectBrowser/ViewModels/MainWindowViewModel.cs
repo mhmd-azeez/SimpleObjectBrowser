@@ -69,7 +69,7 @@ namespace SimpleObjectBrowser.ViewModels
             }
         }
 
-        private int _pageSize = 10;
+        private int _pageSize = 50;
         public int PageSize
         {
             get { return _pageSize; }

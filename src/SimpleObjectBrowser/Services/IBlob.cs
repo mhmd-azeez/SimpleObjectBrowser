@@ -11,6 +11,7 @@ namespace SimpleObjectBrowser.Services
 
     public interface IBlob : IEntry
     {
+        bool ContentTypeIsInferred { get; }
         string ContentType { get; }
         DateTimeOffset? LastModified { get; }
         long Length { get; }

@@ -102,7 +102,11 @@ namespace SimpleObjectBrowser.Services
             if (segmentedResult.ContinuationToken != null)
                 next = prev => ListEntriesAsync(query, segmentedResult.ContinuationToken, prev);
 
+            var currentPageNumber = (previous?.PageNumber ?? 0) + 1;
+
             return new PagedResult<IEnumerable<IEntry>>(
+                query.PageSize,
+                currentPageNumber,
                 result,
                 () => ListEntriesAsync(query, token, previous),
                 previous,
@@ -174,5 +178,7 @@ namespace SimpleObjectBrowser.Services
         }
 
         public bool IsDirectory => false;
+
+        public bool ContentTypeIsInferred => false;
     }
 }

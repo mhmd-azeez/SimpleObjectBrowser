@@ -1,6 +1,8 @@
 ﻿using Amazon.S3;
 using Amazon.S3.Model;
 
+using MimeTypes;
+
 using SimpleObjectBrowser.ViewModels;
 
 using System;
@@ -93,13 +95,8 @@ namespace SimpleObjectBrowser.Services
 
             foreach (var blob in response.S3Objects)
             {
-                var metadata = await _client.GetObjectMetadataAsync(new GetObjectMetadataRequest
-                {
-                    BucketName = blob.BucketName,
-                    Key = blob.Key
-                });
-
-                var contentType = metadata.Headers.ContentType.Split(';').First();
+                var extension = blob.Key.Split('.').Last();
+                MimeTypeMap.TryGetMimeType(extension, out var contentType);
 
                 blobs.Add(new S3Blob(this, blob, contentType));
             }
@@ -113,7 +110,11 @@ namespace SimpleObjectBrowser.Services
             if (response.IsTruncated)
                 next = prev => ListEntriesAsync(query, response.NextContinuationToken, prev);
 
+            var currentPageNumber = (previous?.PageNumber ?? 0) + 1;
+
             return new PagedResult<IEnumerable<IEntry>>(
+                query.PageSize,
+                currentPageNumber,
                 blobs,
                 () => ListEntriesAsync(query, token, previous),
                 previous,
@@ -179,6 +180,9 @@ namespace SimpleObjectBrowser.Services
             Length = _nativeBlob.Size;
             LastModified = _nativeBlob.LastModified;
             ContentType = contentType;
+
+            if (contentType != null)
+                ContentTypeIsInferred = true;
         }
 
         public IStorageBucket Bucket { get; }
@@ -187,5 +191,7 @@ namespace SimpleObjectBrowser.Services
         public DateTimeOffset? LastModified { get; }
         public long Length { get; }
         public bool IsDirectory => false;
+
+        public bool ContentTypeIsInferred { get; }
     }
 }

@@ -9,6 +9,8 @@ namespace SimpleObjectBrowser.Services
 {
     public interface IPagedResult<T>
     {
+        int PageSize { get; }
+        int PageNumber { get; }
         T Result { get; }
         Task<IPagedResult<T>> GetNextPage();
         bool HasNextPage();
@@ -24,11 +26,15 @@ namespace SimpleObjectBrowser.Services
         private readonly Func<IPagedResult<T>, Task<IPagedResult<T>>> _next;
 
         public PagedResult(
+            int pageSize,
+            int pageNumber,
             T result, 
             Func<Task<IPagedResult<T>>> resultFactory, 
             IPagedResult<T> previous = null,
             Func<IPagedResult<T>, Task<IPagedResult<T>>> next = null)
         {
+            PageSize = pageSize;
+            PageNumber = pageNumber;
             Result = result;
             _resultFactory = resultFactory;
             Previous = previous;
@@ -62,6 +68,9 @@ namespace SimpleObjectBrowser.Services
         {
             return Previous != null;
         }
+
+        public int PageNumber { get; }
+        public int PageSize { get; }
     }
 
     public interface IStorageAccount

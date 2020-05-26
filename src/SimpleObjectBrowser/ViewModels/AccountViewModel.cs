@@ -95,12 +95,12 @@ namespace SimpleObjectBrowser.ViewModels
                 var query = new ListQuery
                 {
                     Prefix = prefix,
-                    Heirarchical =  true,
+                    Heirarchical = true,
                     PageSize = pageSize
                 };
 
                 CurrentPage = await NativeBucket.ListEntriesAsync(query);
-                Blobs = new ObservableCollection<BlobViewModel>(CurrentPage.Result.Select(b => new BlobViewModel(this, b)));
+                Blobs = ToBlobs(CurrentPage);
             }
             finally
             {
@@ -116,7 +116,7 @@ namespace SimpleObjectBrowser.ViewModels
             try
             {
                 CurrentPage = await CurrentPage.GetNextPage();
-                Blobs = new ObservableCollection<BlobViewModel>(CurrentPage.Result.Select(b => new BlobViewModel(this, b)));
+                Blobs = ToBlobs(CurrentPage);
             }
             finally
             {
@@ -129,7 +129,7 @@ namespace SimpleObjectBrowser.ViewModels
             if (CanGoBackward == false) return;
 
             CurrentPage = CurrentPage.Previous;
-            Blobs = new ObservableCollection<BlobViewModel>(CurrentPage.Result.Select(b => new BlobViewModel(this, b)));
+            Blobs = ToBlobs(CurrentPage);
         }
 
         public BucketViewModel(IStorageBucket bucket)
@@ -186,12 +186,19 @@ namespace SimpleObjectBrowser.ViewModels
             try
             {
                 CurrentPage = await CurrentPage.Refresh();
-                Blobs = new ObservableCollection<BlobViewModel>(CurrentPage.Result.Select(b => new BlobViewModel(this, b)));
+                Blobs = ToBlobs(CurrentPage);
             }
             finally
             {
                 IsBusy = false;
             }
+        }
+
+        private ObservableCollection<BlobViewModel> ToBlobs(IPagedResult<IEnumerable<IEntry>> currentPage)
+        {
+            var pageOffset = (currentPage.PageNumber - 1) * currentPage.PageSize;
+            return new ObservableCollection<BlobViewModel>(currentPage.Result.Select((b, i) =>
+                    new BlobViewModel(this, b, i + pageOffset + 1)));
         }
 
         public IStorageBucket NativeBucket { get; }
@@ -252,11 +259,11 @@ namespace SimpleObjectBrowser.ViewModels
         private BucketViewModel _parent;
         private IEntry _native;
 
-        public BlobViewModel(BucketViewModel parent, IEntry native)
+        public BlobViewModel(BucketViewModel parent, IEntry native, int number)
         {
             _parent = parent;
             _native = native;
-
+            Number = number;
             FullName = native.Name;
             Name = native.Name.TrimEnd('/').Split('/').LastOrDefault();
 
@@ -285,13 +292,16 @@ namespace SimpleObjectBrowser.ViewModels
             }
             else
             {
-                var extension = MimeTypeMap.GetExtension(ContentType, false);
-                if (string.IsNullOrWhiteSpace(extension) == false)
+                if (ContentType != null)
                 {
-                    var icon = IconManager.FindIconForFilename(extension, true);
-                    if (icon != null)
+                    var extension = MimeTypeMap.GetExtension(ContentType, false);
+                    if (string.IsNullOrWhiteSpace(extension) == false)
                     {
-                        return icon;
+                        var icon = IconManager.FindIconForFilename(extension, true);
+                        if (icon != null)
+                        {
+                            return icon;
+                        }
                     }
                 }
 
@@ -306,5 +316,7 @@ namespace SimpleObjectBrowser.ViewModels
             get { return _contentType; }
             set { Set(ref _contentType, value); }
         }
+
+        public int Number { get; }
     }
 }

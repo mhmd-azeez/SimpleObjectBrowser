@@ -724,7 +724,7 @@ namespace MimeTypes
             return mappings;
         }
 
-        public static string GetMimeType(string extension)
+        public static bool TryGetMimeType(string extension, out string mimeType)
         {
             if (extension == null)
             {
@@ -736,7 +736,12 @@ namespace MimeTypes
                 extension = Dot + extension;
             }
 
-            return _mappings.Value.TryGetValue(extension, out string mime) ? mime : DefaultMimeType;
+            return _mappings.Value.TryGetValue(extension, out mimeType);
+        }
+
+        public static string GetMimeType(string extension)
+        {
+            return TryGetMimeType(extension, out var mime) ? mime : DefaultMimeType;
         }
 
         public static string GetExtension(string mimeType, bool throwErrorIfNotFound = true)

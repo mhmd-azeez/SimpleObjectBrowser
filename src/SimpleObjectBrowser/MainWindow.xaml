@@ -80,11 +80,11 @@
                     <fluent:Button x:Name="refreshButton" Header="Refresh"
                                    Icon="Assets/refresh.png" LargeIcon="Assets/refresh.png"
                                    Command="{Binding RefreshCommand}" />
-                    
+
                     <fluent:Button x:Name="uploadFilesButton" Header="Upload File(s)"
                                    Icon="Assets/upload-file.png" LargeIcon="Assets/upload-file.png"
                                    Command="{Binding UploadFilesCommand}" />
-                    
+
                     <fluent:Button x:Name="deleteEntriesButton" Header="Delete"
                                    Icon="Assets/delete.png" LargeIcon="Assets/delete.png"
                                    Command="{Binding DeleteBlobsCommand}" />
@@ -127,6 +127,7 @@
                     <ListView.View>
                         <GridView xaml:GridViewColumnHelper.UsePercentagesFor="{Binding ElementName=listView}">
                             <GridView.Columns>
+                                <GridViewColumn Header="#" DisplayMemberBinding="{Binding Number}" Width="30" />
                                 <GridViewColumn Width="30">
                                     <GridViewColumn.CellTemplate>
                                         <DataTemplate>
@@ -159,7 +160,7 @@
 
                     <Button Content="Next" Padding="20, 5" x:Name="nextPageButton" Click="nextPageButton_Click" HorizontalAlignment="Right" IsEnabled="{Binding SelectedBucket.CanGoForeward, FallbackValue=False}" />
                 </StackPanel>
-                
+
                 <GridSplitter Grid.Row="2" Height="3" HorizontalAlignment="Stretch" />
 
                 <ListView x:Name="taskListView" ItemsSource="{Binding Tasks, Mode=OneWay}" Grid.Row="3" >
