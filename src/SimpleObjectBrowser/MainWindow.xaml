@@ -43,6 +43,7 @@
         </xaml:TreeItemTemplateSelector>
 
         <ContextMenu x:Key="entryContextMenu">
+            <MenuItem x:Name="downloadBlobsMenuItem" Header="Download" Command="{Binding DataContext.DownloadBlobsCommand, RelativeSource={RelativeSource AncestorType=ListView}}" />
             <MenuItem x:Name="deleteEntryMenuItem" Header="Delete" Command="{Binding DataContext.DeleteBlobsCommand, RelativeSource={RelativeSource AncestorType=ListView}}" />
         </ContextMenu>
 
@@ -84,6 +85,10 @@
                     <fluent:Button x:Name="uploadFilesButton" Header="Upload File(s)"
                                    Icon="Assets/upload-file.png" LargeIcon="Assets/upload-file.png"
                                    Command="{Binding UploadFilesCommand}" />
+
+                    <fluent:Button x:Name="downloadBlobsButton" Header="Download Blob(s)"
+                                   Icon="Assets/download-blobs.png" LargeIcon="Assets/download-blobs.png"
+                                   Command="{Binding DownloadBlobsCommand}" />
 
                     <fluent:Button x:Name="deleteEntriesButton" Header="Delete"
                                    Icon="Assets/delete.png" LargeIcon="Assets/delete.png"

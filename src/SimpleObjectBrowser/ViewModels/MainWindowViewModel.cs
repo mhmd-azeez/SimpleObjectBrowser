@@ -17,8 +17,10 @@ namespace SimpleObjectBrowser.ViewModels
         public MainWindowViewModel()
         {
             DeleteBlobsCommand = new DelegateCommand(p => DeleteBlobs(SelectedBlobs), p => SelectedBlobs?.Count > 0);
+            DownloadBlobsCommand = new DelegateCommand(p => DownloadBlobs(), p => SelectedBlobs?.Count > 0);
             RefreshCommand = new DelegateCommand(p => Refresh(), p => SelectedBucket != null);
             UploadFilesCommand = new DelegateCommand(p => UploadFiles(), p => SelectedBucket != null);
+
         }
 
         private string _prefix;
@@ -51,6 +53,7 @@ namespace SimpleObjectBrowser.ViewModels
                 if (Set(ref _selectedBlobs, value))
                 {
                     DeleteBlobsCommand.RaiseCanExecuteChanged();
+                    DownloadBlobsCommand.RaiseCanExecuteChanged();
                 }
             }
         }
@@ -85,10 +88,28 @@ namespace SimpleObjectBrowser.ViewModels
         public DelegateCommand DeleteBlobsCommand { get; }
         public DelegateCommand RefreshCommand { get; }
         public DelegateCommand UploadFilesCommand { get; }
+        public DelegateCommand DownloadBlobsCommand { get; }
 
         public void SaveAccounts()
         {
             ConfigService.SaveAccounts(Accounts);
+        }
+
+        public void DownloadBlobs()
+        {
+            if (SelectedBucket is null)
+                return;
+
+            using (var dialog = new System.Windows.Forms.FolderBrowserDialog())
+            {
+                System.Windows.Forms.DialogResult result = dialog.ShowDialog();
+
+                if (result != System.Windows.Forms.DialogResult.OK)
+                    return;
+
+                var entries = SelectedBlobs.Select(b => b.NativeBlob).ToList();
+                AddTask(new DownloadBlobsTaskViewModel(dialog.SelectedPath, entries));
+            }
         }
 
         public void UploadFiles()

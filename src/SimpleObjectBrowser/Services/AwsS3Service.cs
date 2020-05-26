@@ -98,7 +98,7 @@ namespace SimpleObjectBrowser.Services
                 var extension = blob.Key.Split('.').Last();
                 MimeTypeMap.TryGetMimeType(extension, out var contentType);
 
-                blobs.Add(new S3Blob(this, blob, contentType));
+                blobs.Add(new S3Blob(this, _client, blob, contentType));
             }
 
             foreach (var p in response.CommonPrefixes)
@@ -159,24 +159,26 @@ namespace SimpleObjectBrowser.Services
 
         public S3Directory(string prefix, IStorageBucket s3Bucket)
         {
-            Name = prefix;
+            Key = prefix;
             Bucket = s3Bucket;
         }
 
         public IStorageBucket Bucket { get; }
-        public string Name { get; }
+        public string Key { get; }
         public bool IsDirectory => true;
     }
 
     public class S3Blob : IBlob
     {
+        private readonly AmazonS3Client _client;
         private S3Object _nativeBlob;
 
-        public S3Blob(S3Bucket s3Bucket, S3Object nativeBlob, string contentType)
+        public S3Blob(S3Bucket s3Bucket, AmazonS3Client client, S3Object nativeBlob, string contentType)
         {
             Bucket = s3Bucket;
+            _client = client;
             _nativeBlob = nativeBlob;
-            Name = _nativeBlob.Key;
+            Key = _nativeBlob.Key;
             Length = _nativeBlob.Size;
             LastModified = _nativeBlob.LastModified;
             ContentType = contentType;
@@ -186,12 +188,35 @@ namespace SimpleObjectBrowser.Services
         }
 
         public IStorageBucket Bucket { get; }
-        public string Name { get; }
+        public string Key { get; }
         public string ContentType { get; }
         public DateTimeOffset? LastModified { get; }
         public long Length { get; }
         public bool IsDirectory => false;
 
         public bool ContentTypeIsInferred { get; }
+
+        public async Task DownloadToStreamAsync(Stream target, IProgress<long> progress, CancellationToken token)
+        {
+            Stream input = null;
+            try
+            {
+                var response = await _client.GetObjectAsync(new GetObjectRequest
+                {
+                    Key = _nativeBlob.Key,
+                    BucketName = _nativeBlob.BucketName,
+                });
+
+                input = response.ResponseStream;
+                await response.ResponseStream.CopyToAsync(target, progress, token);
+            }
+            finally
+            {
+                if (input != null)
+                {
+                    input.Dispose();
+                }
+            }
+        }
     }
 }

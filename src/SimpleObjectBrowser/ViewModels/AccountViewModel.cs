@@ -257,15 +257,14 @@ namespace SimpleObjectBrowser.ViewModels
 
         private string _contentType;
         private BucketViewModel _parent;
-        private IEntry _native;
 
         public BlobViewModel(BucketViewModel parent, IEntry native, int number)
         {
             _parent = parent;
-            _native = native;
+            NativeBlob = native;
             Number = number;
-            FullName = native.Name;
-            Name = native.Name.TrimEnd('/').Split('/').LastOrDefault();
+            FullName = native.Key;
+            Name = native.Key.TrimEnd('/').Split('/').LastOrDefault();
 
             if (native is IBlob blob)
             {
@@ -318,5 +317,6 @@ namespace SimpleObjectBrowser.ViewModels
         }
 
         public int Number { get; }
+        public IEntry NativeBlob { get; set; }
     }
 }

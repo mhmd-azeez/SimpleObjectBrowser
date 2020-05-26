@@ -31,6 +31,23 @@ namespace SimpleObjectBrowser.ViewModels
 
             return path.ToString();
         }
+
+        public static string GetPrefix(string key, char delimiter = '/')
+        {
+            var parts = key.Split(delimiter);
+
+            var builder = new StringBuilder();
+
+            for (int i = 0; i < parts.Length - 1; i++)
+            {
+                builder.Append(parts[i]);
+
+                if (i != parts.Length - 1)
+                    builder.Append(delimiter);
+            }
+
+            return builder.ToString();
+        }
     }
 
     public abstract class TaskViewModel : BindableBase
@@ -118,7 +135,7 @@ namespace SimpleObjectBrowser.ViewModels
                 foreach (var prefix in _prefixes)
                 {
                     var expanded = await _bucket.ListAllEntries(prefix, false);
-                    keys.AddRange(expanded.Select(i => i.Name));
+                    keys.AddRange(expanded.Select(i => i.Key));
                 }
 
                 await _bucket.DeleteBlobs(keys, _tokenSource.Token);
@@ -181,6 +198,81 @@ namespace SimpleObjectBrowser.ViewModels
                     }
 
                     done += file.Length;
+                    processed++;
+                    Progress = done / total;
+                }
+
+                OnSucceeded();
+            }
+            catch (Exception ex)
+            {
+                OnFailed(ex.Message);
+            }
+        }
+    }
+
+    public class DownloadBlobsTaskViewModel : TaskViewModel
+    {
+        private readonly string _localFolderPath;
+        private readonly IList<IEntry> _entries;
+
+        public DownloadBlobsTaskViewModel(string localFolderPath, IList<IEntry> entries)
+        {
+            _localFolderPath = localFolderPath;
+            _entries = entries;
+
+            Text = $"Downloading {entries.Count} entries...";
+        }
+
+        public override async Task StartAsync()
+        {
+            try
+            {
+                foreach (var directory in _entries.Where(e => e.IsDirectory).ToArray())
+                {
+                    _entries.Remove(directory);
+                    var children = await directory.ListAllBlobsAsync();
+
+                    foreach (var child in children)
+                    {
+                        _entries.Add(child);
+                    }
+                }
+
+                var blobs = _entries.OfType<IBlob>().ToArray();
+
+                var total = blobs.Sum(f => f.Length);
+                double done = 0;
+
+                int count = blobs.Length;
+                int processed = 1;
+
+                foreach (var blob in blobs)
+                {
+                    _tokenSource.Token.ThrowIfCancellationRequested();
+
+                    Text = $"Downloading {count} blobs ({processed}: '{blob.Key}')...";
+
+                    var progress = new Progress<long>();
+                    progress.ProgressChanged += (s, transferred) =>
+                    {
+                        Progress = (done + transferred) / total;
+                    };
+
+                    var path = Path.Combine(_localFolderPath, PathHelper.GetPrefix(blob.Key));
+                    if (Directory.Exists(path) == false)
+                    {
+                        Directory.CreateDirectory(path);
+                    }
+
+                    var fullPath = Path.Combine(_localFolderPath, blob.Key);
+
+                    using (var output = File.OpenWrite(fullPath))
+                    {
+                        await blob.DownloadToStreamAsync(output, progress, _tokenSource.Token);
+                    }
+
+                    done += blob.Length;
                     processed++;
                     Progress = done / total;
                 }

@@ -145,14 +145,14 @@ namespace SimpleObjectBrowser.Services
 
     public class AzureDirectory : IEntry
     {
-        public AzureDirectory(AzureBlobStorageContainer azureBlobStorageContainer, string prefix)
+        public AzureDirectory(AzureBlobStorageContainer azureBlobStorageContainer, string name)
         {
             Bucket = azureBlobStorageContainer;
-            Name = prefix;
+            Key = name;
         }
 
         public IStorageBucket Bucket { get; }
-        public string Name { get; }
+        public string Key { get; }
         public bool IsDirectory => true;
     }
 
@@ -160,9 +160,9 @@ namespace SimpleObjectBrowser.Services
     {
         public IStorageBucket Bucket { get; }
 
-        private IListBlobItem _nativeBlob;
+        private CloudBlockBlob _nativeBlob;
 
-        public string Name { get; private set; }
+        public string Key { get; private set; }
         public long Length { get; }
         public DateTimeOffset? LastModified { get; }
         public string ContentType { get; }
@@ -171,7 +171,7 @@ namespace SimpleObjectBrowser.Services
         {
             Bucket = container;
             _nativeBlob = nativeBlob;
-            Name = _nativeBlob.Uri.AbsoluteUri;
+            Key = _nativeBlob.Name;
             Length = nativeBlob.Properties.Length;
             LastModified = nativeBlob.Properties.LastModified;
             ContentType = nativeBlob.Properties.ContentType;
@@ -180,5 +180,22 @@ namespace SimpleObjectBrowser.Services
         public bool IsDirectory => false;
 
         public bool ContentTypeIsInferred => false;
+
+        public async Task DownloadToStreamAsync(Stream target, IProgress<long> progress, CancellationToken token)
+        {
+            var storageProgress = new Progress<StorageProgress>();
+            storageProgress.ProgressChanged += (s, args) =>
+            {
+                progress.Report(args.BytesTransferred);
+            };
+
+            await _nativeBlob.DownloadToStreamAsync(
+                target, 
+                AccessCondition.GenerateEmptyCondition(), 
+                new BlobRequestOptions(), 
+                new OperationContext(), 
+                storageProgress, 
+                token);
+        }
     }
 }

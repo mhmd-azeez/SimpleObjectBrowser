@@ -68,7 +68,7 @@ namespace SimpleObjectBrowser
             }
         }
 
-        private async void ListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        private void ListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             if (listView.SelectedItem is BlobViewModel entry && entry.IsDirectory)
             {
