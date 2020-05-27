@@ -23,6 +23,7 @@ namespace SimpleObjectBrowser.ViewModels
             UploadFilesCommand = new DelegateCommand(p => UploadFiles(), p => SelectedBucket != null);
             UpCommand = new DelegateCommand(p => Up(), p => Prefix?.Length > 0);
             CopyLinkCommand = new DelegateCommand(p => CopyLink(), p => SelectedBlobs?.Count > 0);
+            DownloadBucketCommand = new DelegateCommand(p => DownloadBucket(), p => SelectedBucket != null);
         }
 
         private string _prefix;
@@ -77,6 +78,7 @@ namespace SimpleObjectBrowser.ViewModels
                 {
                     RefreshCommand.RaiseCanExecuteChanged();
                     UploadFilesCommand.RaiseCanExecuteChanged();
+                    DownloadBucketCommand.RaiseCanExecuteChanged();
                 }
             }
         }
@@ -100,6 +102,7 @@ namespace SimpleObjectBrowser.ViewModels
         public DelegateCommand DownloadBlobsCommand { get; }
         public DelegateCommand UpCommand { get; }
         public DelegateCommand CopyLinkCommand { get; }
+        public DelegateCommand DownloadBucketCommand { get; }
 
         public void SaveAccounts()
         {
@@ -110,6 +113,22 @@ namespace SimpleObjectBrowser.ViewModels
         {
             Prefix = PathHelper.GetParent(Prefix);
             Load();
+        }
+
+        private void DownloadBucket()
+        {
+            if (SelectedBucket is null)
+                return;
+
+            using (var dialog = new System.Windows.Forms.FolderBrowserDialog())
+            {
+                System.Windows.Forms.DialogResult result = dialog.ShowDialog();
+
+                if (result != System.Windows.Forms.DialogResult.OK)
+                    return;
+
+                AddTask(new DownloadBlobsTaskViewModel(dialog.SelectedPath, SelectedBucket.NativeBucket));
+            }
         }
 
         public void DownloadBlobs()

@@ -200,5 +200,8 @@
   <ItemGroup>
     <Resource Include="Assets\link.png" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Assets\download-bucket.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

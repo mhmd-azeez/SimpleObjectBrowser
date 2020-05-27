@@ -214,7 +214,16 @@ namespace SimpleObjectBrowser.ViewModels
     public class DownloadBlobsTaskViewModel : TaskViewModel
     {
         private readonly string _localFolderPath;
-        private readonly IList<IEntry> _entries;
+        private readonly IStorageBucket _bucket;
+        private IList<IEntry> _entries;
+
+        public DownloadBlobsTaskViewModel(string localFolderPath, IStorageBucket bucket)
+        {
+            _localFolderPath = localFolderPath;
+            _bucket = bucket;
+
+            Text = $"Downloading {bucket.Name}...";
+        }
 
         public DownloadBlobsTaskViewModel(string localFolderPath, IList<IEntry> entries)
         {
@@ -228,6 +237,16 @@ namespace SimpleObjectBrowser.ViewModels
         {
             try
             {
+                if (_bucket != null)
+                {
+                    _entries = new List<IEntry>();
+                    var children = await _bucket.ListAllEntries(string.Empty, false);
+                    foreach (var child in children)
+                    {
+                        _entries.Add(child);
+                    }
+                }
+
                 foreach (var directory in _entries.Where(e => e.IsDirectory).ToArray())
                 {
                     _entries.Remove(directory);

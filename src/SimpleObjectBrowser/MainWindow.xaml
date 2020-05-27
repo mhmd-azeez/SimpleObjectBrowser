@@ -26,6 +26,7 @@
                         <StackPanel.ContextMenu>
                             <ContextMenu>
                                 <MenuItem x:Name="forgetAccountMenuItem" Header="Forget" Click="forgetAccountMenuItem_Click" />
+                                <MenuItem x:Name="downloadBucketMenuItem" Header="Download" Command="{Binding DownloadBucketCommand}" />
                             </ContextMenu>
                         </StackPanel.ContextMenu>
                     </StackPanel>
@@ -90,6 +91,10 @@
                     <fluent:Button x:Name="downloadBlobsButton" Header="Download Blob(s)"
                                    Icon="Assets/download-blobs.png" LargeIcon="Assets/download-blobs.png"
                                    Command="{Binding DownloadBlobsCommand}" />
+
+                    <fluent:Button x:Name="downloadBucketButton" Header="Download Bucket"
+                                   Icon="Assets/download-bucket.png" LargeIcon="Assets/download-bucket.png"
+                                   Command="{Binding DownloadBucketCommand}" />
 
                     <fluent:Button x:Name="copyLinkButton" Header="Copy Link"
                                    Icon="Assets/link.png" LargeIcon="Assets/link.png"
