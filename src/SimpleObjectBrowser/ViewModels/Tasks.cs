@@ -24,12 +24,12 @@ namespace SimpleObjectBrowser.ViewModels
             for (int i = 1; i < parts.Length; i++)
             {
                 if (path.Length > 0)
-                    path.Append($"{path}/{parts[i]}");
+                    path.Append($"/{parts[i]}");
                 else
                     path.Append(parts[i]);
             }
 
-            return path.ToString();
+            return path.Replace('\\', '/').ToString();
         }
 
         public static string GetParent(string key, char delimiter = '/')
@@ -54,6 +54,11 @@ namespace SimpleObjectBrowser.ViewModels
     {
         protected CancellationTokenSource _tokenSource = new CancellationTokenSource();
 
+        public TaskViewModel()
+        {
+            CancelCommand = new DelegateCommand(p => Cancel());
+        }
+
         private string _text;
         public string Text
         {
@@ -67,6 +72,8 @@ namespace SimpleObjectBrowser.ViewModels
             get { return _progress; }
             protected set { Set(ref _progress, value); }
         }
+
+        public DelegateCommand CancelCommand { get; }
 
         private bool _isIndeterminate;
         public bool IsIndeterminate
@@ -101,10 +108,24 @@ namespace SimpleObjectBrowser.ViewModels
 
     public class FileInfo
     {
-        public string Name { get; set; }
         public Func<Stream> OpenStream { get; set; }
         public long Length { get; set; }
         public string ContentType { get; set; }
+
+        public string RelativePath { get; set; }
+
+        public override int GetHashCode()
+        {
+            return RelativePath.GetHashCode();
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is FileInfo file)
+                return file.RelativePath == RelativePath;
+
+            return base.Equals(obj);
+        }
     }
 
     public class DeleteBlobsTaskViewModel : TaskViewModel
@@ -182,7 +203,7 @@ namespace SimpleObjectBrowser.ViewModels
                 {
                     _tokenSource.Token.ThrowIfCancellationRequested();
 
-                    Text = $"Uploading {count} files ({processed}: '{file.Name}')...";
+                    Text = $"Uploading {count} files ({processed}: '{file.RelativePath}')...";
 
                     var progress = new Progress<long>();
                     progress.ProgressChanged += (s, transferred) =>
@@ -190,7 +211,7 @@ namespace SimpleObjectBrowser.ViewModels
                         Progress = (done + transferred) / total;
                     };
 
-                    var fullName = PathHelper.Combine(_prefix, file.Name);
+                    var fullName = PathHelper.Combine(_prefix, file.RelativePath);
 
                     using (var stream = file.OpenStream())
                     {

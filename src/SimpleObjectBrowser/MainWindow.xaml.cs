@@ -145,5 +145,10 @@ namespace SimpleObjectBrowser
             if (_viewModel.SelectedBucket is null) return;
             _viewModel.SelectedBucket.GoBackward();
         }
+
+        private void uploadFoldersMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            uploadFilesButton.IsDropDownOpen = false;
+        }
     }
 }

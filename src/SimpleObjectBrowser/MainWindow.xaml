@@ -84,9 +84,13 @@
                                    Icon="Assets/refresh.png" LargeIcon="Assets/refresh.png"
                                    Command="{Binding RefreshCommand}" />
 
-                    <fluent:Button x:Name="uploadFilesButton" Header="Upload File(s)"
+                    <fluent:SplitButton x:Name="uploadFilesButton" Header="Upload File(s)"
                                    Icon="Assets/upload-file.png" LargeIcon="Assets/upload-file.png"
-                                   Command="{Binding UploadFilesCommand}" />
+                                   Command="{Binding UploadFilesCommand}">
+                        <fluent:SplitButton.Items>
+                            <MenuItem x:Name="uploadFoldersMenuItem" Header="Upload Folders" Click="uploadFoldersMenuItem_Click" Command="{Binding UploadFoldersCommand}" />
+                        </fluent:SplitButton.Items>
+                    </fluent:SplitButton>
 
                     <fluent:Button x:Name="downloadBlobsButton" Header="Download Blob(s)"
                                    Icon="Assets/download-blobs.png" LargeIcon="Assets/download-blobs.png"
@@ -203,7 +207,10 @@
                                 <GridViewColumn Header="Progress" Width="250">
                                     <GridViewColumn.CellTemplate>
                                         <DataTemplate>
-                                            <ProgressBar Value="{Binding Progress, Mode=OneWay}" IsIndeterminate="{Binding IsIndeterminate}" Height="10" Maximum="1" Minimum="0" />
+                                            <DockPanel LastChildFill="True">
+                                                <Button Content="X" Padding="5, 2" Command="{Binding CancelCommand}" DockPanel.Dock="Left" Margin="0, 0, 10, 0" />
+                                                <ProgressBar Value="{Binding Progress, Mode=OneWay}" IsIndeterminate="{Binding IsIndeterminate}" Height="10" Maximum="1" Minimum="0" />
+                                            </DockPanel>
                                         </DataTemplate>
                                     </GridViewColumn.CellTemplate>
                                 </GridViewColumn>

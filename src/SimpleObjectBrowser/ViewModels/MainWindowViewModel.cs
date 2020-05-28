@@ -1,4 +1,5 @@
 ﻿using Microsoft.Win32;
+using Microsoft.WindowsAPICodePack.Dialogs;
 
 using SimpleObjectBrowser.Mvvm;
 using SimpleObjectBrowser.Services;
@@ -6,10 +7,12 @@ using SimpleObjectBrowser.Services;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Xml.Serialization;
 
 namespace SimpleObjectBrowser.ViewModels
 {
@@ -20,7 +23,8 @@ namespace SimpleObjectBrowser.ViewModels
             DeleteBlobsCommand = new DelegateCommand(p => DeleteBlobs(SelectedBlobs), p => SelectedBlobs?.Count > 0);
             DownloadBlobsCommand = new DelegateCommand(p => DownloadBlobs(), p => SelectedBlobs?.Count > 0);
             RefreshCommand = new DelegateCommand(p => Refresh(), p => SelectedBucket != null);
-            UploadFilesCommand = new DelegateCommand(p => UploadFiles(), p => SelectedBucket != null);
+            UploadFilesCommand = new DelegateCommand(p => UploadFromDialog(false), p => SelectedBucket != null);
+            UploadFoldersCommand = new DelegateCommand(p => UploadFromDialog(true), p => SelectedBucket != null);
             UpCommand = new DelegateCommand(p => Up(), p => Prefix?.Length > 0);
             CopyLinkCommand = new DelegateCommand(p => CopyLink(), p => SelectedBlobs?.Count > 0);
             DownloadBucketCommand = new DelegateCommand(p => DownloadBucket(), p => SelectedBucket != null);
@@ -78,6 +82,7 @@ namespace SimpleObjectBrowser.ViewModels
                 {
                     RefreshCommand.RaiseCanExecuteChanged();
                     UploadFilesCommand.RaiseCanExecuteChanged();
+                    UploadFoldersCommand.RaiseCanExecuteChanged();
                     DownloadBucketCommand.RaiseCanExecuteChanged();
                 }
             }
@@ -99,6 +104,7 @@ namespace SimpleObjectBrowser.ViewModels
         public DelegateCommand DeleteBlobsCommand { get; }
         public DelegateCommand RefreshCommand { get; }
         public DelegateCommand UploadFilesCommand { get; }
+        public DelegateCommand UploadFoldersCommand { get; }
         public DelegateCommand DownloadBlobsCommand { get; }
         public DelegateCommand UpCommand { get; }
         public DelegateCommand CopyLinkCommand { get; }
@@ -187,38 +193,65 @@ namespace SimpleObjectBrowser.ViewModels
             }
         }
 
-        public void UploadFiles()
+        public void UploadFromDialog(bool directories)
         {
             if (SelectedBucket is null)
                 return;
 
-            var dialog = new OpenFileDialog();
+            var dialog = new CommonOpenFileDialog();
             dialog.Multiselect = true;
+            dialog.IsFolderPicker = directories;
             var result = dialog.ShowDialog();
 
-            if (result != true)
+            if (result != CommonFileDialogResult.Ok)
                 return;
 
-            var files = dialog.FileNames.Select(p =>
-            {
-                var name = p.Split('\\').Last();
-                var extension = name.Split('.').Last();
-                var contentType = MimeTypes.MimeTypeMap.GetMimeType(extension);
+            UploadPaths(dialog.FileNames);
+        }
 
-                using (var stream = System.IO.File.OpenRead(p))
+        private void UploadPaths(IEnumerable<string> paths)
+        {
+            var files = new HashSet<FileInfo>();
+            var directories = paths.Where(p => Directory.Exists(p)).ToList();
+
+            foreach (var directory in directories)
+            {
+                var grandParent = Path.GetDirectoryName(directory);
+
+                foreach (var child in Directory.EnumerateFiles(directory, "*.*", SearchOption.AllDirectories))
                 {
-                    return new FileInfo
-                    {
-                        OpenStream = () => System.IO.File.OpenRead(p),
-                        ContentType = contentType,
-                        Length = System.IO.File.OpenRead(p).Length,
-                        Name = name
-                    };
+                    var relativePath = child.Substring(grandParent.Length).Trim(new[] { '/', '\\' });
+
+                    files.Add(GetFileInfo(child, relativePath));
                 }
-            });
+            }
+
+            foreach (var file in paths.Except(directories))
+            {
+                var name = file.Split('\\').Last();
+                files.Add(GetFileInfo(file, name));
+            }
 
             var task = new UploadBlobsTaskViewModel(files, Prefix, SelectedBucket.NativeBucket);
             AddTask(task);
+        }
+
+        private static FileInfo GetFileInfo(string path, string relativePath)
+        {
+            var name = path.Split('\\').Last();
+            var extension = name.Split('.').Last();
+            var contentType = MimeTypes.MimeTypeMap.GetMimeType(extension);
+
+            using (var stream = System.IO.File.OpenRead(path))
+            {
+                return new FileInfo
+                {
+                    OpenStream = () => System.IO.File.OpenRead(path),
+                    ContentType = contentType,
+                    Length = System.IO.File.OpenRead(path).Length,
+                    RelativePath = relativePath,
+                };
+            }
         }
 
         private void AddTask(TaskViewModel task)
