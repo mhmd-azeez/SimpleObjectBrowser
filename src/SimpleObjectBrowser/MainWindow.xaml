@@ -27,7 +27,7 @@
                             <ContextMenu>
                                 <MenuItem x:Name="forgetAccountMenuItem" Header="Forget" Click="forgetAccountMenuItem_Click" />
                                 <MenuItem x:Name="downloadBucketMenuItem" Header="Download" Command="{Binding DownloadBucketCommand}" />
-                            </ContextMenu>
+                            </ContextMenu> 
                         </StackPanel.ContextMenu>
                     </StackPanel>
                 </HierarchicalDataTemplate>
@@ -143,7 +143,9 @@
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="2*" />
                         <ColumnDefinition Width="1*" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
                     <StackPanel Orientation="Horizontal">
@@ -151,6 +153,9 @@
                     </StackPanel>
 
                     <TextBox Text="{Binding Prefix}" VerticalContentAlignment="Center" Padding="5, 2" IsReadOnly="True" Grid.Column="1" />
+                    
+                    <TextBox Text="{Binding Filter}" VerticalContentAlignment="Center" Padding="5, 2" Grid.Column="2" />
+                    <Button Content="Filter" x:Name="filterButton" Padding="5, 2" Command="{Binding FilterCommand}" Grid.Column="3" />
                 </Grid>
 
                 <ListView x:Name="listView" SelectionMode="Extended"

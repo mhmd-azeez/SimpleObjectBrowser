@@ -28,6 +28,7 @@ namespace SimpleObjectBrowser.ViewModels
             UpCommand = new DelegateCommand(p => Up(), p => Prefix?.Length > 0);
             CopyLinkCommand = new DelegateCommand(p => CopyLink(), p => SelectedBlobs?.Count > 0);
             DownloadBucketCommand = new DelegateCommand(p => DownloadBucket(), p => SelectedBucket != null);
+            FilterCommand = new DelegateCommand(p => Load(Filter), p => SelectedBucket != null);
         }
 
         private string _prefix;
@@ -42,6 +43,20 @@ namespace SimpleObjectBrowser.ViewModels
                 }
             }
         }
+
+        private string _filter;
+        public string Filter
+        {
+            get { return _filter; }
+            set
+            {
+                if (Set(ref _filter, value))
+                {
+                    FilterCommand.RaiseCanExecuteChanged();
+                }
+            }
+        }
+
 
         private ObservableCollection<AccountViewModel> _accounts = new ObservableCollection<AccountViewModel>();
         public ObservableCollection<AccountViewModel> Accounts
@@ -84,6 +99,7 @@ namespace SimpleObjectBrowser.ViewModels
                     UploadFilesCommand.RaiseCanExecuteChanged();
                     UploadFoldersCommand.RaiseCanExecuteChanged();
                     DownloadBucketCommand.RaiseCanExecuteChanged();
+                    FilterCommand.RaiseCanExecuteChanged();
                 }
             }
         }
@@ -109,6 +125,7 @@ namespace SimpleObjectBrowser.ViewModels
         public DelegateCommand UpCommand { get; }
         public DelegateCommand CopyLinkCommand { get; }
         public DelegateCommand DownloadBucketCommand { get; }
+        public DelegateCommand FilterCommand { get; }
 
         public void SaveAccounts()
         {
@@ -297,13 +314,13 @@ namespace SimpleObjectBrowser.ViewModels
             }
         }
 
-        internal async void Load()
+        internal async void Load(string filter = "")
         {
             if (SelectedBucket is null) return;
 
             try
             {
-                await SelectedBucket.LoadAsync(Prefix, PageSize);
+                await SelectedBucket.LoadAsync(Prefix + filter, PageSize);
             }
             catch (Exception ex)
             {
