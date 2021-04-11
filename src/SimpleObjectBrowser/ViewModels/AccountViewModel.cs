@@ -18,6 +18,7 @@ namespace SimpleObjectBrowser.ViewModels
     {
         AwsS3,
         AzureBlobStorage,
+        GoogleCloudStorage,
     }
 
     public class AccountViewModel : BindableBase
