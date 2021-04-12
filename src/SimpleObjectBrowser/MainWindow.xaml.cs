@@ -150,5 +150,12 @@ namespace SimpleObjectBrowser
         {
             uploadFilesButton.IsDropDownOpen = false;
         }
+
+        private void addGoogleStorageMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            addAccountButton.IsDropDownOpen = false;
+            var window = new GoogleCloudStorageDialog();
+            AddAccount(window);
+        }
     }
 }

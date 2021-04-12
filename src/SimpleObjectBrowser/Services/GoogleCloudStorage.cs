@@ -22,6 +22,7 @@ namespace SimpleObjectBrowser.Services
     {
         public string Name { get; set; }
         public string Credentials { get; set; }
+        public string Bucket { get; set; }
 
         public IStorageAccount Connect()
         {
@@ -30,7 +31,7 @@ namespace SimpleObjectBrowser.Services
             using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(Credentials)))
             {
                 var serviceAccountCreds = ServiceAccountCredential.FromServiceAccountData(stream);
-                return new GoogleCloudStorageAccount(googleCreds, serviceAccountCreds, Name);
+                return new GoogleCloudStorageAccount(googleCreds, serviceAccountCreds, Bucket, Name);
             }
 
         }
@@ -42,15 +43,18 @@ namespace SimpleObjectBrowser.Services
         private readonly GoogleCredential _credentials;
         private readonly ServiceAccountCredential _serviceAccount;
         private readonly StorageClient _client;
+        private readonly string _bucketName;
 
         public GoogleCloudStorageAccount(
             GoogleCredential credentials,
             ServiceAccountCredential serviceAccount,
+            string bucketName,
             string name)
         {
             _credentials = credentials;
             _serviceAccount = serviceAccount;
             _client = StorageClient.Create(credentials);
+            _bucketName = bucketName;
             Name = name ?? serviceAccount.ProjectId ?? "Google Cloud Storage";
         }
 
@@ -60,27 +64,30 @@ namespace SimpleObjectBrowser.Services
 
         public async Task<IEnumerable<IStorageBucket>> ListBucketsAsync()
         {
+            if (_bucketName != null)
+            {
+                return new List<IStorageBucket> { new GoogleStorageBucket(_bucketName, _client, _serviceAccount) };
+            }
+
             var buckets = await _client.ListBucketsAsync(_serviceAccount.ProjectId).ReadPageAsync(1024);
 
-            return buckets.Select(b => new GoogleStorageBucket(b, _client, _serviceAccount));
+            return buckets.Select(b => new GoogleStorageBucket(b.Name, _client, _serviceAccount));
         }
     }
 
     public class GoogleStorageBucket : IStorageBucket
     {
-        private Bucket _nativeBucket;
         private StorageClient _client;
         private readonly ServiceAccountCredential _serviceAccount;
 
         public GoogleStorageBucket(
-            Bucket nativeBucket,
+            string name,
             StorageClient client,
             ServiceAccountCredential serviceAccount)
         {
-            _nativeBucket = nativeBucket;
             _client = client;
             _serviceAccount = serviceAccount;
-            Name = _nativeBucket.Name;
+            Name = name;
         }
 
         public string Name { get; }
@@ -144,7 +151,7 @@ namespace SimpleObjectBrowser.Services
         {
             var request = new Google.Apis.Storage.v1.Data.Object
             {
-                Bucket = _nativeBucket.Name,
+                Bucket = Name,
                 Name = fullName,
                 ContentType = contentType,
             };
@@ -162,7 +169,7 @@ namespace SimpleObjectBrowser.Services
         {
             foreach (var key in keys)
             {
-                await _client.DeleteObjectAsync(_nativeBucket.Name, key, cancellationToken: token);
+                await _client.DeleteObjectAsync(Name, key, cancellationToken: token);
             }
         }
     }

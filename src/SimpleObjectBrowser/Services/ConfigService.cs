@@ -3,11 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using System;
-using Meziantou.Framework.Win32;
-using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
+using System.IO;
+using System.IO.Compression;
 
 namespace SimpleObjectBrowser.Services
 {
@@ -39,6 +37,7 @@ namespace SimpleObjectBrowser.Services
                 var credential = CredentialManager.ReadCredential(Key);
                 if (string.IsNullOrEmpty(credential?.Password) == false)
                 {
+                    var password = credential.Password;
                     var root = JsonConvert.DeserializeObject<CredentialRoot>(credential.Password, _jsonSettings);
 
                     foreach (var account in root.Accounts)
@@ -70,7 +69,8 @@ namespace SimpleObjectBrowser.Services
             };
 
             var json = JsonConvert.SerializeObject(root, _jsonSettings);
-            CredentialManager.WriteCredential(Key, "accounts", json, CredentialPersistence.LocalMachine);
+            CredentialManager.WriteCredential(Key, "accounts", json);
         }
+
     }
 }

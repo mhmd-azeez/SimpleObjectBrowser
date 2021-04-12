@@ -77,6 +77,7 @@
                         <fluent:DropDownButton.Items>
                             <MenuItem x:Name="addBlobStorageMenuItem" Header="Azure _Blob Storage" Click="addBlobStorageMenuItem_Click" />
                             <MenuItem x:Name="addS3MenuItem" Header="AWS _S3" Click="addS3MenuItem_Click" />
+                            <MenuItem x:Name="addGoogleStorageMenuItem" Header="_Google Cloud Storage" Click="addGoogleStorageMenuItem_Click" />
                         </fluent:DropDownButton.Items>
                     </fluent:DropDownButton>
 
